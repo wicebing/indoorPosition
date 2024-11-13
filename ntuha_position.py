@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from PIL import Image
-import datetime,os,math, pytz, json. pickle
+import datetime,os,math, pytz, json, pickle
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import matplotlib.colors as mcolors
@@ -17,6 +17,12 @@ local_timezone = pytz.timezone('Asia/Taipei')
 beacon_ids = utils.get_beacons()
 print('=== load beacons ids ===')
 
+x_min=302491
+x_max=302516
+y_min=2770397
+y_max=2770422
+scale = 45
+grid_size = 45
 txyzPds = {}
 
 for beacon in beacon_ids:
@@ -30,6 +36,9 @@ for beacon in beacon_ids:
         pd_pz = pd.json_normalize(txyzPd_origin['position'])
         pd_time = pd.to_datetime(txyzPd_origin['positionTime'],format='mixed').dt.tz_convert(local_timezone)
         df = pd.concat([pd_time,pd_pz],axis=1)
+        
+        df['x'] = df['x']-x_min
+        df['y'] = df['y']-y_min
         
         txyzPds[beacon]=df
 
@@ -46,10 +55,10 @@ def plot_trajectory(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint'):
     Args:
         df: Pandas DataFrame with 'positionTime' (datetime) and 'position' (dict).
     """
-    x_min=302491
-    x_max=302516
-    y_min=2770397
-    y_max=2770422
+    x_min=302491 - 302491
+    x_max=302516 - 302491
+    y_min=2770397 - 2770397
+    y_max=2770422 - 2770397
     scale = 45
     grid_size = 45
     
@@ -109,22 +118,23 @@ def plot_trajectory(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint'):
 select_beacons =['N002', 'N003', 'N004', 'N005', 'N006', 'N007', 'N008', 'N017', 'N029']
 
 for i, evt in events.iterrows():
-    hours = 1.5
-    dfs = []
+    hours = 1
     positionTime = evt['positionTime']
     evt_x = evt['X']
     evt_y = evt['Y']
     evt_what = evt['事件分類']
+    發生地點 = evt['發生地點']
     startTime = positionTime-datetime.timedelta(hours=hours)
     
-    if i != 12:
-        continue
+    # if i != 30:
+    #     continue
+    dfs = []
     for beacon in select_beacons:
         df = txyzPds[beacon].loc[(txyzPds[beacon]['positionTime'] >= startTime) & (txyzPds[beacon]['positionTime'] <= positionTime)]    
         if len(df) > 0:
             dfs.append(df)
     
-    plot_trajectory(dfs, evt_x, evt_y, evt_what, pic_name=f'{i}_{hours}hour')
+    plot_trajectory(dfs, evt_x, evt_y, evt_what, pic_name=f'{i+1}_{發生地點}_{positionTime.hour}_{hours}hour')
     
         
     
