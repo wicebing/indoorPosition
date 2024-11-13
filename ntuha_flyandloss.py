@@ -60,7 +60,7 @@ for beacon in beacon_ids:
         for i in range(5):
             aa = detect_and_label_outliers(aao, window='3s')
             aao = aao.loc[~aa.fly]
-            print(len(aa)-len(aao),len(aa),len(df))
+            print(len(aa)-len(aao),len(aa),len(aao))
             txyzOutlier[beacon]['outlier'] += len(aa)-len(aao)
         
         txyzPds[beacon]=aao.reset_index()
