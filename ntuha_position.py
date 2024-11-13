@@ -71,9 +71,7 @@ def plot_trajectory(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint'):
     
     colors = ['blue','violet','limegreen','darkorange',
               'tomato','gold','peru','salmon','hotpink']
-    
-    color_map = plt.cm.get_cmap('viridis')
-    
+        
     for i, df in enumerate(dfs):
         # Extract x and y coordinates; handle potential errors.
         x = scale*(df['x']-x_min)
@@ -134,7 +132,7 @@ for i, evt in events.iterrows():
         if len(df) > 0:
             dfs.append(df)
     
-    plot_trajectory(dfs, evt_x, evt_y, evt_what, pic_name=f'{i+1}_{發生地點}_{positionTime.hour}_{hours}hour')
+    plot_trajectory(dfs, evt_x-x_min, evt_y-y_min, evt_what, pic_name=f'{i+1}_{發生地點}_{positionTime.hour}_{hours}hour')
     
         
     
