@@ -68,13 +68,13 @@ def plot_trajectory(dfs, evt_x, evt_y, pic_name='evtTimePoint'):
         y = scale*(df['y']-y_min)
         
         # Calculate alpha values for transparency (optional)
-        alpha_values = np.linspace(1, 0.2, len(x)) # Adjust transparency as needed
+        alpha_values = np.linspace(0.0, 0.75, len(x)) # Adjust transparency as needed
         
         # Plot points with transparency
-        ax.scatter(x, y, c = colors[i], alpha=0.3, s = 10)
+        ax.scatter(x, y, c = colors[i], alpha=alpha_values, s = 15)
 
-    # Add a line connecting the points
-    ax.plot(x, y, color=colors[i], alpha = 0.1, linestyle = '-') 
+        # Add a line connecting the points
+        ax.plot(x, y, color=colors[i], alpha = 0.1, linestyle = '-') 
     
     # plot event point
     ax.scatter(scale*(evt_x-x_min),scale*(evt_y-y_min), marker='P', s =200, c='black')
