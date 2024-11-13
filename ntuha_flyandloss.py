@@ -29,14 +29,18 @@ txyzOutlier = {}
 def detect_and_label_outliers(df, window='3s'):
     dfc = df.copy()  # Avoid modifying the original DataFrame
 
-    dfc['x_avg'] = dfc['x'].rolling(window).mean()
-    dfc['y_avg'] = dfc['y'].rolling(window).mean()
+    dfc['x_avg'] = dfc['x'].shift(1).rolling(window).mean()
+    dfc['y_avg'] = dfc['y'].shift(1).rolling(window).mean()
 
-    # Identify outliers
-    # dfc['fly'] = None
-    dfc.loc[((dfc['x']-dfc['x_avg']).abs()>5) | ((dfc['y']-dfc['y_avg']).abs()>3), 'fly'] = True
+    dfc['x_m1'] = dfc['x'].shift(1)
+    dfc['y_m1'] = dfc['y'].shift(1)
 
+    dfc['group']=0
+    dfc.loc[((dfc['x']-dfc['x_m1']).abs()>7) | ((dfc['y']-dfc['y_m1']).abs()>7), 'group'] +=1
+    dfc.loc[((dfc['x']-dfc['x_avg']).abs()>10) | ((dfc['y']-dfc['y_avg']).abs()>10), 'fly'] = True
+    
     dfc['fly'] = dfc['fly'].fillna(False) # handle cases where no outlier was detected.
+    dfc['group'] = dfc['group'].cumsum()
     return dfc
 
 for beacon in beacon_ids:
@@ -54,14 +58,52 @@ for beacon in beacon_ids:
         df['x'] = df['x']-x_min
         df['y'] = df['y']-y_min
         
-        txyzOutlier[beacon] = {'origin':len(df),'outlier':0}
-        
-        aao = df.copy().set_index('positionTime')
-        for i in range(5):
+        aao = df.dropna().copy().set_index('positionTime')
+        txyzOutlier[beacon] = {'origin':len(aao),'outlier':0}
+        outliers = 1
+        while(outliers>0):
             aa = detect_and_label_outliers(aao, window='3s')
-            aao = aao.loc[~aa.fly]
+            group_count = aa.value_counts('group')
+            aa['group_num'] = group_count[aa.group].values
+            drop = ((aa.fly) & (aa['group_num']<=3)) | (aa['group_num']<=2)
+            aao = aao.loc[~drop]
             print(len(aa)-len(aao),len(aa),len(aao))
-            txyzOutlier[beacon]['outlier'] += len(aa)-len(aao)
+            outliers = len(aa)-len(aao)
+            txyzOutlier[beacon]['outlier'] += outliers
+            
+        group_x = aao.groupby('group')['x'].mean()
+        group_y = aao.groupby('group')['y'].mean()
+        group_count = aa.value_counts('group')
+        
+        fly_group = aao[aao.fly]
+        
+        drop_group = []
+        
+        for dgp in list(set(fly_group['group'])):
+            now_x = group_x[int(dgp)]
+            now_y = group_y[int(dgp)]
+            if now_x < -2 or now_x >27:
+                drop_group.append(dgp)
+            if now_y < -2 or now_y >27:
+                drop_group.append(dgp)
+                
+            try:
+                if (abs(group_x[int(dgp-1)]-group_x[int(dgp+1)])<5) & \
+                    (abs(now_x-group_x[int(dgp-1)])>5) & \
+                     (group_count[int(dgp)]<15):
+                     drop_group.append(dgp)
+                if (abs(group_y[int(dgp-1)]-group_y[int(dgp+1)])<5) & \
+                    (abs(now_y-group_y[int(dgp-1)])>5)& \
+                     (group_count[int(dgp)]<15):
+                     drop_group.append(dgp)            
+            except:
+                pass
+        drop_group=list(set(drop_group))
+        
+        for dpg in drop_group:
+            drop = aao['group']==dpg
+            txyzOutlier[beacon]['outlier'] += drop.sum()
+            aao = aao.loc[~drop]
         
         txyzPds[beacon]=aao.reset_index()
 
