@@ -5,6 +5,7 @@ import datetime,os,math, pytz, json. pickle
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import matplotlib.colors as mcolors
+from matplotlib.colors import to_rgb, to_rgba
 
 import utils
 
@@ -39,7 +40,7 @@ events['positionTime'] = pd.to_datetime(events['日期'] + ' ' + events['時間'
 events = events[['positionTime','發生地點','事件分類', 'X', 'Y']]
 
 
-def plot_trajectory(dfs, evt_x, evt_y, pic_name='evtTimePoint'):
+def plot_trajectory(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint'):
     """Plots the trajectory of points from a DataFrame.
 
     Args:
@@ -62,22 +63,31 @@ def plot_trajectory(dfs, evt_x, evt_y, pic_name='evtTimePoint'):
     colors = ['blue','violet','limegreen','darkorange',
               'tomato','gold','peru','salmon','hotpink']
     
+    color_map = plt.cm.get_cmap('viridis')
+    
     for i, df in enumerate(dfs):
         # Extract x and y coordinates; handle potential errors.
         x = scale*(df['x']-x_min)
         y = scale*(df['y']-y_min)
+        times = df['positionTime'].values
         
         # Calculate alpha values for transparency (optional)
         alpha_values = np.linspace(0.0, 0.75, len(x)) # Adjust transparency as needed
+        r, g, b = to_rgb(colors[i])
+        clr = [(r, g, b, alpha) for alpha in np.floor(alpha_values*10)/10]
         
         # Plot points with transparency
-        ax.scatter(x, y, c = colors[i], alpha=alpha_values, s = 15)
+        ax.scatter(x, y, c = clr, alpha=0.5, s = 15)
 
         # Add a line connecting the points
         ax.plot(x, y, color=colors[i], alpha = 0.1, linestyle = '-') 
     
     # plot event point
-    ax.scatter(scale*(evt_x-x_min),scale*(evt_y-y_min), marker='P', s =200, c='black')
+    if evt_what == '轉重症':
+        ax.scatter(scale*(evt_x-x_min),scale*(evt_y-y_min), marker='P', s =200, c='black')
+    else:
+        ax.scatter(scale*(evt_x-x_min),scale*(evt_y-y_min), marker='P', s =350, c='black')
+        ax.scatter(scale*(evt_x-x_min),scale*(evt_y-y_min), marker='P', s =150, c='lightyellow')
 
     # Set plot limits
     major_ticks = np.arange(0, 1125, grid_size)
@@ -90,7 +100,7 @@ def plot_trajectory(dfs, evt_x, evt_y, pic_name='evtTimePoint'):
     
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
-    ax.set_title('Position Trajectory')
+    ax.set_title(f'Position Trajectory_{pic_name}')
 
     # plt.axis('off')
     plt.grid(True)
@@ -99,19 +109,22 @@ def plot_trajectory(dfs, evt_x, evt_y, pic_name='evtTimePoint'):
 select_beacons =['N002', 'N003', 'N004', 'N005', 'N006', 'N007', 'N008', 'N017', 'N029']
 
 for i, evt in events.iterrows():
+    hours = 1.5
     dfs = []
     positionTime = evt['positionTime']
     evt_x = evt['X']
     evt_y = evt['Y']
     evt_what = evt['事件分類']
-    startTime = positionTime-datetime.timedelta(hours=1)
+    startTime = positionTime-datetime.timedelta(hours=hours)
     
+    if i != 12:
+        continue
     for beacon in select_beacons:
         df = txyzPds[beacon].loc[(txyzPds[beacon]['positionTime'] >= startTime) & (txyzPds[beacon]['positionTime'] <= positionTime)]    
         if len(df) > 0:
             dfs.append(df)
     
-    plot_trajectory(dfs, evt_x, evt_y, pic_name='evtTimePoint')
+    plot_trajectory(dfs, evt_x, evt_y, evt_what, pic_name=f'{i}_{hours}hour')
     
         
     
