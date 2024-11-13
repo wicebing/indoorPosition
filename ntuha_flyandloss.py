@@ -26,18 +26,18 @@ grid_size = 45
 txyzPds = {}
 txyzOutlier = {}
 
-def detect_and_label_outliers(df, columns_to_check=['x', 'y'], window='3s'):
-    dfc = df.set_index('positionTime').copy()  # Avoid modifying the original DataFrame
+def detect_and_label_outliers(df, window='3s'):
+    dfc = df.copy()  # Avoid modifying the original DataFrame
 
     dfc['x_avg'] = dfc['x'].rolling(window).mean()
     dfc['y_avg'] = dfc['y'].rolling(window).mean()
 
     # Identify outliers
-    dfc['fly'] = None
+    # dfc['fly'] = None
     dfc.loc[((dfc['x']-dfc['x_avg']).abs()>5) | ((dfc['y']-dfc['y_avg']).abs()>3), 'fly'] = True
 
     dfc['fly'] = dfc['fly'].fillna(False) # handle cases where no outlier was detected.
-    return dfc.reset_index()
+    return dfc
 
 for beacon in beacon_ids:
     recordName= f'{beacon}.pkl'
@@ -55,11 +55,13 @@ for beacon in beacon_ids:
         df['y'] = df['y']-y_min
         
         txyzOutlier[beacon] = {'origin':len(df),'outlier':0}
-        for i in range(5):
-            aa = detect_and_label_outliers(df, columns_to_check=['x', 'y'], window='3s')
-            df = df.loc[~aa.fly]
-            print(len(aa)-len(df),len(aa),len(df))
-            txyzOutlier[beacon]['outlier'] += len(aa)-len(df)
         
-        txyzPds[beacon]=df
+        aao = df.copy().set_index('positionTime')
+        for i in range(5):
+            aa = detect_and_label_outliers(aao, window='3s')
+            aao = aao.loc[~aa.fly]
+            print(len(aa)-len(aao),len(aa),len(df))
+            txyzOutlier[beacon]['outlier'] += len(aa)-len(aao)
+        
+        txyzPds[beacon]=aao.reset_index()
 
