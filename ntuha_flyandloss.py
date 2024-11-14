@@ -138,19 +138,20 @@ for beacon in beacon_ids:
             drop_group=list(set(drop_group))
             outliers_group = len(drop_group)
             
-            drop_idx_ = []
-            for dpg in drop_group:
-                drop = aa['group']==dpg
-                drop_idx_.append(drop)
-                # txyzOutlier[beacon]['outlier'] += drop.sum()
-                # print(f'drop {while_loop} group{dpg} {drop.sum()}')
-                # aa = aa.loc[~drop]
-            drop_idx = pd.concat(drop_idx_,axis=1)
-            dropAll = drop_idx.sum(axis=1).astype(bool)
-            txyzOutlier[beacon]['outlier'] += dropAll.sum()
-            print(f'drop {while_loop} {dropAll.sum()}')
-            aao = aao.loc[~dropAll]
-            while_loop += 1
+            if outliers_group >0:
+                drop_idx_ = []
+                for dpg in drop_group:
+                    drop = aa['group']==dpg
+                    drop_idx_.append(drop)
+                    # txyzOutlier[beacon]['outlier'] += drop.sum()
+                    # print(f'drop {while_loop} group{dpg} {drop.sum()}')
+                    # aa = aa.loc[~drop]
+                drop_idx = pd.concat(drop_idx_,axis=1)
+                dropAll = drop_idx.sum(axis=1).astype(bool)
+                txyzOutlier[beacon]['outlier'] += dropAll.sum()
+                print(f'drop {while_loop} {dropAll.sum()}')
+                aao = aao.loc[~dropAll]
+                while_loop += 1
         
         txyzPds[beacon]=aao.reset_index()
     
