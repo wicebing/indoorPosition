@@ -83,8 +83,11 @@ for beacon in beacon_ids:
             print(len(aa)-len(aao),len(aa),len(aao))
             outliers = len(aa)-len(aao)
             txyzOutlier[beacon]['outlier'] += outliers
-                
-        for i in range(2):
+        
+            
+        outliers_group = 1
+        while_loop = 0
+        while(outliers_group>0):
             aa = detect_and_label_outliers(aao, window='3s')
             group_x = aa.groupby('group')['x'].mean()
             group_y = aa.groupby('group')['y'].mean()
@@ -133,13 +136,14 @@ for beacon in beacon_ids:
                 except:
                     pass
             drop_group=list(set(drop_group))
-            
+            outliers_group = len(drop_group)
             for dpg in drop_group:
                 drop = aa['group']==dpg
                 txyzOutlier[beacon]['outlier'] += drop.sum()
-                print(f'drop {i} group{dpg} {drop.sum()}')
+                print(f'drop {while_loop} group{dpg} {drop.sum()}')
                 aa = aa.loc[~drop]
             aao = aao.loc[aa.index]
+            while_loop += 1
         
         txyzPds[beacon]=aao.reset_index()
     
