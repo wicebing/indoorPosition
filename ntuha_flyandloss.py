@@ -38,8 +38,8 @@ def detect_and_label_outliers(df, window='3s'):
     dfc['y_m1'] = dfc['y'].shift(1)
 
     dfc['group']=0
-    dfc.loc[((dfc['x']-dfc['x_m1']).abs()>7) | ((dfc['y']-dfc['y_m1']).abs()>7), 'group'] +=1
-    dfc.loc[((dfc['x']-dfc['x_avg']).abs()>10) | ((dfc['y']-dfc['y_avg']).abs()>10), 'fly'] = True
+    dfc.loc[((dfc['x']-dfc['x_m1']).abs()>5) | ((dfc['y']-dfc['y_m1']).abs()>5), 'group'] +=1
+    dfc.loc[((dfc['x']-dfc['x_avg']).abs()>5) | ((dfc['y']-dfc['y_avg']).abs()>5), 'fly'] = True
     
     dfc['fly'] = dfc['fly'].fillna(False) # handle cases where no outlier was detected.
     dfc['group'] = dfc['group'].cumsum()
@@ -95,11 +95,11 @@ for beacon in beacon_ids:
             try:
                 if (abs(group_x[int(dgp-1)]-group_x[int(dgp+1)])<5) & \
                     (abs(now_x-group_x[int(dgp-1)])>5) & \
-                     (group_count[int(dgp)]<15):
+                     (group_count[int(dgp)]<60):
                      drop_group.append(dgp)
                 if (abs(group_y[int(dgp-1)]-group_y[int(dgp+1)])<5) & \
                     (abs(now_y-group_y[int(dgp-1)])>5)& \
-                     (group_count[int(dgp)]<15):
+                     (group_count[int(dgp)]<60):
                      drop_group.append(dgp)            
             except:
                 pass
