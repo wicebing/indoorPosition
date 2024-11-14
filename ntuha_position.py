@@ -148,10 +148,9 @@ with open("./guider20240808/databank/pkl/filter01.pkl", 'rb') as f:
     txyzPds = pickle.load(f)
 
 # Draw Trajectory 
-def Trajectory_plot(drawPds,flag='origin'):
+def Trajectory_plot(drawPds,hours=1,flag='origin'):
     for i, evt in events.iterrows():
         print(f' == work on {i} event == ')
-        hours = 8
         positionTime = evt['positionTime']
         evt_x = evt['X']
         evt_y = evt['Y']
@@ -169,5 +168,5 @@ def Trajectory_plot(drawPds,flag='origin'):
         
         plot_trajectory(dfs, evt_x-x_min, evt_y-y_min, evt_what, pic_name=f'{i+1}_{發生地點}_{positionTime.hour}_{hours}hour_{flag}')
         
-Trajectory_plot(txyzPds,'filter_1')       
-Trajectory_plot(txyzPds_origin,'')      
+Trajectory_plot(txyzPds,1,'filter_2')       
+Trajectory_plot(txyzPds_origin,1,'')      

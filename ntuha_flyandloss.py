@@ -37,7 +37,7 @@ def detect_and_label_outliers(df, window='3s'):
     dfc['x_m1'] = dfc['x'].shift(1)
     dfc['y_m1'] = dfc['y'].shift(1)
     
-    dfc['time_diff'] = dfc['positionTime'].diff().dt.total_seconds()
+    dfc['time_diff'] = dfc['timesss'].diff().dt.total_seconds()
 
     dfc['group']=0
     dfc.loc[((dfc['x']-dfc['x_m1']).abs()>5) | ((dfc['y']-dfc['y_m1']).abs()>5), 'group'] +=1
@@ -66,6 +66,7 @@ for beacon in beacon_ids:
         txyzPds_origin[beacon]=df
         
         aao = df.dropna().copy().set_index('positionTime')
+        aao['timesss'] = aao.index
         txyzOutlier[beacon] = {'origin':len(aao),'outlier':0}
         outliers = 1
         while(outliers>0):
@@ -99,14 +100,27 @@ for beacon in beacon_ids:
             try:
                 if (abs(group_x[int(dgp-1)]-group_x[int(dgp+1)])<5) & \
                     (abs(now_x-group_x[int(dgp-1)])>5) & \
-                     (group_count[int(dgp)]<60) & \
-                      (group_lapse[int(dgp)]<300):
+                    (group_count[int(dgp)]<(group_count[int(dgp-1)])) & \
+                     (group_count[int(dgp)]<30) & \
+                      (group_lapse[int(dgp)]<150):
                           drop_group.append(dgp)
                 if (abs(group_y[int(dgp-1)]-group_y[int(dgp+1)])<5) & \
                     (abs(now_y-group_y[int(dgp-1)])>5)& \
+                     (group_count[int(dgp)]<30) & \
+                      (group_lapse[int(dgp)]<150):
+                          drop_group.append(dgp)
+                if (abs(now_x-group_x[int(dgp-1)])>5) & \
+                    (group_count[int(dgp)]<(group_count[int(dgp-1)])) & \
+                    (group_count[int(dgp)]<(group_count[int(dgp+1)])) & \
                      (group_count[int(dgp)]<60) & \
-                      (group_lapse[int(dgp)]<300):
-                     drop_group.append(dgp)            
+                      (group_lapse[int(dgp)]<120):
+                          drop_group.append(dgp)
+                if (abs(now_y-group_y[int(dgp-1)])>5)& \
+                    (group_count[int(dgp)]<(group_count[int(dgp-1)])) & \
+                    (group_count[int(dgp)]<(group_count[int(dgp+1)])) & \
+                     (group_count[int(dgp)]<60) & \
+                      (group_lapse[int(dgp)]<120):
+                          drop_group.append(dgp)                          
             except:
                 pass
         drop_group=list(set(drop_group))
