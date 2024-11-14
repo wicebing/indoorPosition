@@ -24,24 +24,24 @@ y_min=2770397
 y_max=2770422
 scale = 45
 grid_size = 45
-txyzPds = {}
+# txyzPds = {}
 
-for beacon in beacon_ids:
-    recordName= f'{beacon}.pkl'
-    pickle_filepath = os.path.join(databank_filepath,recordName)
+# for beacon in beacon_ids:
+#     recordName= f'{beacon}.pkl'
+#     pickle_filepath = os.path.join(databank_filepath,recordName)
     
-    if os.path.isfile(pickle_filepath):
-        print(f'=== {beacon}.pkl exist, loading ===')
+#     if os.path.isfile(pickle_filepath):
+#         print(f'=== {beacon}.pkl exist, loading ===')
 
-        txyzPd_origin = pd.read_pickle(pickle_filepath)
-        pd_pz = pd.json_normalize(txyzPd_origin['position'])
-        pd_time = pd.to_datetime(txyzPd_origin['positionTime'],format='mixed').dt.tz_convert(local_timezone)
-        df = pd.concat([pd_time,pd_pz],axis=1)
+#         txyzPd_origin = pd.read_pickle(pickle_filepath)
+#         pd_pz = pd.json_normalize(txyzPd_origin['position'])
+#         pd_time = pd.to_datetime(txyzPd_origin['positionTime'],format='mixed').dt.tz_convert(local_timezone)
+#         df = pd.concat([pd_time,pd_pz],axis=1)
         
-        df['x'] = df['x']-x_min
-        df['y'] = df['y']-y_min
+#         df['x'] = df['x']-x_min
+#         df['y'] = df['y']-y_min
         
-        txyzPds[beacon]=df
+#         txyzPds[beacon]=df
 
 def plot_trajectory(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint'):
     """Plots the trajectory of points from a DataFrame.
@@ -170,4 +170,4 @@ with open("./guider20240808/databank/pkl/filter01.pkl", 'rb') as f:
     txyzPds = pickle.load(f)        
  
 Trajectory_plot(events, txyzPds,8,'filter_4')       
-Trajectory_plot(events, txyzPds_origin,8,'')      
+# Trajectory_plot(events, txyzPds_origin,8,'')      
