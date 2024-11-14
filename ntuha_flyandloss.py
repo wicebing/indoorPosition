@@ -118,4 +118,4 @@ with open("./guider20240808/databank/pkl/origin.pkl", 'wb') as f:
 with open("./guider20240808/databank/pkl/filter01.pkl", 'wb') as f:
     pickle.dump(txyzPds, f)
 
-pd.DataFrame(txyzOutlier).to_excel('outliers.xlsx')
+pd.DataFrame(txyzOutlier).to_excel('./output/outliers.xlsx')
