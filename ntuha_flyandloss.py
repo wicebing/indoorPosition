@@ -14,7 +14,8 @@ os.makedirs(databank_filepath,exist_ok=True)
 
 local_timezone = pytz.timezone('Asia/Taipei')  
 
-beacon_ids = utils.get_beacons()
+select_beacons =['N002', 'N003', 'N004', 'N005', 'N006', 'N007', 'N008', 'N017', 'N029']
+beacon_ids = select_beacons #utils.get_beacons()
 print('=== load beacons ids ===')
 
 x_min=302491
@@ -24,6 +25,7 @@ y_max=2770422
 scale = 45
 grid_size = 45
 txyzPds = {}
+txyzPds_origin = {}
 txyzOutlier = {}
 
 def detect_and_label_outliers(df, window='3s'):
@@ -57,6 +59,8 @@ for beacon in beacon_ids:
         
         df['x'] = df['x']-x_min
         df['y'] = df['y']-y_min
+        
+        txyzPds_origin[beacon]=df
         
         aao = df.dropna().copy().set_index('positionTime')
         txyzOutlier[beacon] = {'origin':len(aao),'outlier':0}
@@ -106,5 +110,12 @@ for beacon in beacon_ids:
             txyzOutlier[beacon]['outlier'] += drop.sum()
             aa = aa.loc[~drop]
         
-        txyzPds[beacon]=aao.reset_index()
+        txyzPds[beacon]=aa.reset_index()
+    
 
+with open("./guider20240808/databank/pkl/origin.pkl", 'wb') as f:
+    pickle.dump(txyzPds_origin, f)    
+with open("./guider20240808/databank/pkl/filter01.pkl", 'wb') as f:
+    pickle.dump(txyzPds, f)
+
+pd.DataFrame(txyzOutlier).to_excel('outliers.xlsx')

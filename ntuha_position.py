@@ -12,9 +12,10 @@ import utils
 databank_filepath = "./guider20240808/databank/positions"
 os.makedirs(databank_filepath,exist_ok=True)
 
-local_timezone = pytz.timezone('Asia/Taipei')  
-
-beacon_ids = utils.get_beacons()
+local_timezone = pytz.timezone('Asia/Taipei') 
+ 
+select_beacons =['N002', 'N003', 'N004', 'N005', 'N006', 'N007', 'N008', 'N017', 'N029']
+beacon_ids = select_beacons #utils.get_beacons()
 print('=== load beacons ids ===')
 
 x_min=302491
@@ -42,13 +43,6 @@ for beacon in beacon_ids:
         
         txyzPds[beacon]=df
 
-events = pd.read_excel("./guider20240808/databank/events.xlsx")
-events['日期'] = events['日期'].astype(str)
-events['時間'] = events['時間'].astype(str)
-events['positionTime'] = pd.to_datetime(events['日期'] + ' ' + events['時間'], format='%Y-%m-%d %H%M', errors='coerce').dt.tz_localize(local_timezone)
-events = events[['positionTime','發生地點','事件分類', 'X', 'Y']]
-
-
 def plot_trajectory(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint'):
     """Plots the trajectory of points from a DataFrame.
 
@@ -70,7 +64,7 @@ def plot_trajectory(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint'):
     ax.imshow(img_array)
     
     colors = ['blue','violet','limegreen','darkorange',
-              'tomato','gold','peru','salmon','hotpink']
+              'tomato','royalblue','peru','salmon','hotpink']
         
     for i, df in enumerate(dfs):
         # Extract x and y coordinates; handle potential errors.
@@ -113,10 +107,17 @@ def plot_trajectory(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint'):
     plt.grid(True)
     plt.show()
 
-select_beacons =['N002', 'N003', 'N004', 'N005', 'N006', 'N007', 'N008', 'N017', 'N029']
+# Load the event timePoint
+events = pd.read_excel("./guider20240808/databank/events.xlsx")
+events['日期'] = events['日期'].astype(str)
+events['時間'] = events['時間'].astype(str)
+events['positionTime'] = pd.to_datetime(events['日期'] + ' ' + events['時間'], format='%Y-%m-%d %H%M', errors='coerce').dt.tz_localize(local_timezone)
+events = events[['positionTime','發生地點','事件分類', 'X', 'Y']]
+
+# Draw Trajectory 
 
 for i, evt in events.iterrows():
-    hours = 1
+    hours = 8
     positionTime = evt['positionTime']
     evt_x = evt['X']
     evt_y = evt['Y']
