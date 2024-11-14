@@ -46,7 +46,7 @@ def detect_and_label_outliers(df, window='3s'):
     dfc.loc[(((dfc['x']-dfc['x_avg']).abs()>3) | ((dfc['y']-dfc['y_avg']).abs()>3)), 'fly'] = True
     dfc.loc[(((dfc['x']-dfc['x_avg']).abs()>7) | ((dfc['y']-dfc['y_avg']).abs()>7)) & (dfc['time_diff'] < 5), 'fly'] = True
     
-    dfc['fly'] = dfc['fly'].infer_objects(copy=False).fillna(False) # handle cases where no outlier was detected.
+    dfc['fly'] = dfc['fly'].astype(bool).fillna(False) # handle cases where no outlier was detected.
     dfc['group'] = dfc['group'].cumsum()
     return dfc
 
@@ -113,7 +113,7 @@ for beacon in beacon_ids:
                         (abs(now_x-group_x[int(dgp-1)])>4)) & \
                         ((group_count[int(dgp)]<(group_count[int(dgp-1)])) | \
                         (group_count[int(dgp)]<(group_count[int(dgp+1)]))) & \
-                          (group_lapse[int(dgp)]<60):
+                          (group_lapse[int(dgp)]<300):
                               drop_group.append(dgp)                    
                 except:
                     pass
@@ -123,7 +123,7 @@ for beacon in beacon_ids:
                         (group_count[int(dgp)]<(group_count[int(dgp-1)])) & \
                         (group_count[int(dgp)]<(group_count[int(dgp+1)])) & \
                          (group_count[int(dgp)]<75) & \
-                          (group_lapse[int(dgp)]<180):
+                          (group_lapse[int(dgp)]<300):
                               drop_group.append(dgp)                      
                 except:
                     pass
@@ -131,18 +131,25 @@ for beacon in beacon_ids:
                 try:
                     if (abs(group_x[int(dgp-1)]-group_x[int(dgp+1)])<3) & \
                         (abs(group_y[int(dgp-1)]-group_y[int(dgp+1)])<3) & \
-                          (group_lapse[int(dgp)]<60):
+                          (group_lapse[int(dgp)]<300):
                               drop_group.append(dgp)                    
                 except:
                     pass
             drop_group=list(set(drop_group))
             outliers_group = len(drop_group)
+            
+            drop_idx_ = []
             for dpg in drop_group:
                 drop = aa['group']==dpg
-                txyzOutlier[beacon]['outlier'] += drop.sum()
-                print(f'drop {while_loop} group{dpg} {drop.sum()}')
-                aa = aa.loc[~drop]
-            aao = aao.loc[aa.index]
+                drop_idx_.append(drop)
+                # txyzOutlier[beacon]['outlier'] += drop.sum()
+                # print(f'drop {while_loop} group{dpg} {drop.sum()}')
+                # aa = aa.loc[~drop]
+            drop_idx = pd.concat(drop_idx_,axis=1)
+            dropAll = drop_idx.sum(axis=1).astype(bool)
+            txyzOutlier[beacon]['outlier'] += dropAll.sum()
+            print(f'drop {while_loop} {dropAll.sum()}')
+            aao = aao.loc[~dropAll]
             while_loop += 1
         
         txyzPds[beacon]=aao.reset_index()
