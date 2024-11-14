@@ -42,9 +42,12 @@ def detect_and_label_outliers(df, window='3s'):
     dfc['group']=0
     dfc.loc[(((dfc['x']-dfc['x_m1']).abs()>5) | ((dfc['y']-dfc['y_m1']).abs()>5)), 'group'] +=1
     dfc.loc[(((dfc['x']-dfc['x_m1']).abs()>12) | ((dfc['y']-dfc['y_m1']).abs()>12)) & (dfc['time_diff']<5), 'group'] +=1
-    dfc.loc[(((dfc['x']-dfc['x_m1']).abs()>3) | ((dfc['y']-dfc['y_m1']).abs()>3)) & (dfc['time_diff'] > 90), 'group'] +=1
+    # dfc.loc[(((dfc['x']-dfc['x_m1']).abs()>3) | ((dfc['y']-dfc['y_m1']).abs()>3)) & (dfc['time_diff'] > 90), 'group'] +=1
+    dfc.loc[(dfc['time_diff'] > 90), 'group'] +=1
     dfc.loc[(((dfc['x']-dfc['x_avg']).abs()>3) | ((dfc['y']-dfc['y_avg']).abs()>3)), 'fly'] = True
     dfc.loc[(((dfc['x']-dfc['x_avg']).abs()>7) | ((dfc['y']-dfc['y_avg']).abs()>7)) & (dfc['time_diff'] < 5), 'fly'] = True
+    dfc.loc[(((dfc['x']-dfc['x_m1']).abs()>12) | ((dfc['y']-dfc['y_m1']).abs()>12)) & (dfc['time_diff']<5), 'fly'] = True
+    dfc.loc[((((dfc['x']-dfc['x_m1']).abs()>5) | ((dfc['y']-dfc['y_m1']).abs()>5))) & (dfc['time_diff']<3), 'fly'] = True
     
     dfc['fly'] = dfc['fly'].astype(bool).fillna(False) # handle cases where no outlier was detected.
     dfc['group'] = dfc['group'].cumsum()
@@ -70,7 +73,8 @@ for beacon in beacon_ids:
         aao = df.dropna().copy().set_index('positionTime')
         aao['timesss'] = aao.index
         out_boundary = (aao['x']<0)|((aao['x']>25))|(aao['y']<0)|((aao['y']>25))
-        txyzOutlier[beacon] = {'origin':len(aao),'outlier':out_boundary.sum()}
+        txyzOutlier[beacon] = {'origin':len(aao),'outlier':0, 'out_boundary':out_boundary.sum()}
+        print(f'out_boundary {out_boundary.sum()}')
         aao = aao.loc[~out_boundary]
         
         outliers = 1

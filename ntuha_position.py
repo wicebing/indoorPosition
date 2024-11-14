@@ -74,7 +74,8 @@ def plot_trajectory(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint'):
               'N029':'peru',}
     
         
-    for k,df in dfs.items():
+    for k,d in dfs.items():
+        df = d.copy()
         # Extract x and y coordinates; handle potential errors.
         x = scale*(df['x']-x_min)
         y = scale*(df['y']-y_min)
@@ -134,21 +135,8 @@ def plot_trajectory(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint'):
     plt.savefig(fname=f'./output/pic/{pic_name}.png')
     print(f' === complete {pic_name} image === ')
 
-# Load the event timePoint
-events = pd.read_excel("./guider20240808/databank/events.xlsx")
-events['日期'] = events['日期'].astype(str)
-events['時間'] = events['時間'].astype(str)
-events['positionTime'] = pd.to_datetime(events['日期'] + ' ' + events['時間'], format='%Y-%m-%d %H%M', errors='coerce').dt.tz_localize(local_timezone)
-events = events[['positionTime','發生地點','事件分類', 'X', 'Y']]
-
-# Load the beacon positionTime
-with open("./guider20240808/databank/pkl/origin.pkl", 'rb') as f:
-    txyzPds_origin = pickle.load(f)
-with open("./guider20240808/databank/pkl/filter01.pkl", 'rb') as f:
-    txyzPds = pickle.load(f)
-
 # Draw Trajectory 
-def Trajectory_plot(drawPds,hours=1,flag='origin'):
+def Trajectory_plot(events, drawPds,hours=1,flag='origin'):
     for i, evt in events.iterrows():
         print(f' == work on {i} event == ')
         positionTime = evt['positionTime']
@@ -167,6 +155,19 @@ def Trajectory_plot(drawPds,hours=1,flag='origin'):
                 dfs[beacon]=df
         
         plot_trajectory(dfs, evt_x-x_min, evt_y-y_min, evt_what, pic_name=f'{i+1}_{發生地點}_{positionTime.hour}_{hours}hour_{flag}')
-        
-Trajectory_plot(txyzPds,8,'filter_4')       
-Trajectory_plot(txyzPds_origin,8,'')      
+ 
+# Load the event timePoint
+events = pd.read_excel("./guider20240808/databank/events.xlsx")
+events['日期'] = events['日期'].astype(str)
+events['時間'] = events['時間'].astype(str)
+events['positionTime'] = pd.to_datetime(events['日期'] + ' ' + events['時間'], format='%Y-%m-%d %H%M', errors='coerce').dt.tz_localize(local_timezone)
+events = events[['positionTime','發生地點','事件分類', 'X', 'Y']]
+
+# Load the beacon positionTime
+with open("./guider20240808/databank/pkl/origin.pkl", 'rb') as f:
+    txyzPds_origin = pickle.load(f)
+with open("./guider20240808/databank/pkl/filter01.pkl", 'rb') as f:
+    txyzPds = pickle.load(f)        
+ 
+Trajectory_plot(events, txyzPds,8,'filter_4')       
+Trajectory_plot(events, txyzPds_origin,8,'')      
