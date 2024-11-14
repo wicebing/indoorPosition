@@ -41,12 +41,12 @@ def detect_and_label_outliers(df, window='3s'):
 
     dfc['group']=0
     dfc.loc[(((dfc['x']-dfc['x_m1']).abs()>5) | ((dfc['y']-dfc['y_m1']).abs()>5)), 'group'] +=1
-    dfc.loc[(((dfc['x']-dfc['x_m1']).abs()>10) | ((dfc['y']-dfc['y_m1']).abs()>10)) & (dfc['time_diff']<5), 'group'] +=1
+    dfc.loc[(((dfc['x']-dfc['x_m1']).abs()>12) | ((dfc['y']-dfc['y_m1']).abs()>12)) & (dfc['time_diff']<5), 'group'] +=1
     dfc.loc[(((dfc['x']-dfc['x_m1']).abs()>3) | ((dfc['y']-dfc['y_m1']).abs()>3)) & (dfc['time_diff'] > 90), 'group'] +=1
     dfc.loc[(((dfc['x']-dfc['x_avg']).abs()>3) | ((dfc['y']-dfc['y_avg']).abs()>3)), 'fly'] = True
-    dfc.loc[(((dfc['x']-dfc['x_avg']).abs()>15) | ((dfc['y']-dfc['y_avg']).abs()>15)) & (dfc['time_diff'] < 10), 'fly'] = True
+    dfc.loc[(((dfc['x']-dfc['x_avg']).abs()>7) | ((dfc['y']-dfc['y_avg']).abs()>7)) & (dfc['time_diff'] < 5), 'fly'] = True
     
-    dfc['fly'] = dfc['fly'].fillna(False).infer_objects(copy=False) # handle cases where no outlier was detected.
+    dfc['fly'] = dfc['fly'].infer_objects(copy=False).fillna(False) # handle cases where no outlier was detected.
     dfc['group'] = dfc['group'].cumsum()
     return dfc
 
@@ -98,16 +98,16 @@ for beacon in beacon_ids:
             for dgp in list(set(fly_group['group'])):
                 now_x = group_x[int(dgp)]
                 now_y = group_y[int(dgp)]
-                if now_x < -1 or now_x >26:
+                if now_x < 1 or now_x >24:
                     drop_group.append(dgp)
-                if now_y < -1 or now_y >26:
+                if now_y < 1 or now_y >26:
                     drop_group.append(dgp)
                     
                 try:
                     if (abs(group_x[int(dgp-1)]-group_x[int(dgp+1)])<6) & \
                         (abs(now_x-group_x[int(dgp-1)])>4) & \
-                        (group_count[int(dgp)]<(group_count[int(dgp-1)])) & \
-                        (group_count[int(dgp)]<(group_count[int(dgp+1)])) & \
+                        ((group_count[int(dgp)]<(group_count[int(dgp-1)])) | \
+                        (group_count[int(dgp)]<(group_count[int(dgp+1)]))) & \
                           (group_lapse[int(dgp)]<60):
                               drop_group.append(dgp)                    
                 except:
@@ -115,8 +115,8 @@ for beacon in beacon_ids:
                 try:
                     if (abs(group_y[int(dgp-1)]-group_y[int(dgp+1)])<6) & \
                         (abs(now_y-group_y[int(dgp-1)])>4)& \
-                        (group_count[int(dgp)]<(group_count[int(dgp-1)])) & \
-                        (group_count[int(dgp)]<(group_count[int(dgp+1)])) & \
+                        ((group_count[int(dgp)]<(group_count[int(dgp-1)])) | \
+                        (group_count[int(dgp)]<(group_count[int(dgp+1)]))) & \
                           (group_lapse[int(dgp)]<60):
                               drop_group.append(dgp)                       
                 except:
@@ -125,7 +125,7 @@ for beacon in beacon_ids:
                     if (abs(now_x-group_x[int(dgp-1)])>6) & \
                         (group_count[int(dgp)]<(group_count[int(dgp-1)])) & \
                         (group_count[int(dgp)]<(group_count[int(dgp+1)])) & \
-                         (group_count[int(dgp)]<150) & \
+                         (group_count[int(dgp)]<75) & \
                           (group_lapse[int(dgp)]<180):
                               drop_group.append(dgp)                     
                 except:
@@ -134,7 +134,7 @@ for beacon in beacon_ids:
                     if (abs(now_y-group_y[int(dgp-1)])>6)& \
                         (group_count[int(dgp)]<(group_count[int(dgp-1)])) & \
                         (group_count[int(dgp)]<(group_count[int(dgp+1)])) & \
-                         (group_count[int(dgp)]<150) & \
+                         (group_count[int(dgp)]<75) & \
                           (group_lapse[int(dgp)]<180):
                               drop_group.append(dgp)                          
                 except:
