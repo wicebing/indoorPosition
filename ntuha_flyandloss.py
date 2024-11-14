@@ -36,10 +36,13 @@ def detect_and_label_outliers(df, window='3s'):
 
     dfc['x_m1'] = dfc['x'].shift(1)
     dfc['y_m1'] = dfc['y'].shift(1)
+    
+    dfc['time_diff'] = dfc['positionTime'].diff().dt.total_seconds()
 
     dfc['group']=0
     dfc.loc[((dfc['x']-dfc['x_m1']).abs()>5) | ((dfc['y']-dfc['y_m1']).abs()>5), 'group'] +=1
-    dfc.loc[((dfc['x']-dfc['x_avg']).abs()>5) | ((dfc['y']-dfc['y_avg']).abs()>5), 'fly'] = True
+    dfc.loc[(dfc['time_diff'] > 90), 'group'] +=1
+    dfc.loc[(((dfc['x']-dfc['x_avg']).abs()>5) | ((dfc['y']-dfc['y_avg']).abs()>5)) & (dfc['time_diff'] < 60), 'fly'] = True
     
     dfc['fly'] = dfc['fly'].fillna(False) # handle cases where no outlier was detected.
     dfc['group'] = dfc['group'].cumsum()
@@ -78,6 +81,7 @@ for beacon in beacon_ids:
         aa = detect_and_label_outliers(aao, window='3s')
         group_x = aa.groupby('group')['x'].mean()
         group_y = aa.groupby('group')['y'].mean()
+        group_lapse = aa.groupby('group')['time_diff'].sum()
         group_count = aa.value_counts('group')
         
         fly_group = aa[aa.fly]
@@ -95,11 +99,13 @@ for beacon in beacon_ids:
             try:
                 if (abs(group_x[int(dgp-1)]-group_x[int(dgp+1)])<5) & \
                     (abs(now_x-group_x[int(dgp-1)])>5) & \
-                     (group_count[int(dgp)]<60):
-                     drop_group.append(dgp)
+                     (group_count[int(dgp)]<60) & \
+                      (group_lapse[int(dgp)]<300):
+                          drop_group.append(dgp)
                 if (abs(group_y[int(dgp-1)]-group_y[int(dgp+1)])<5) & \
                     (abs(now_y-group_y[int(dgp-1)])>5)& \
-                     (group_count[int(dgp)]<60):
+                     (group_count[int(dgp)]<60) & \
+                      (group_lapse[int(dgp)]<300):
                      drop_group.append(dgp)            
             except:
                 pass
