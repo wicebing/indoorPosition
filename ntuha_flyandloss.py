@@ -105,38 +105,31 @@ for beacon in beacon_ids:
                     
                 try:
                     if (abs(group_x[int(dgp-1)]-group_x[int(dgp+1)])<6) & \
-                        (abs(now_x-group_x[int(dgp-1)])>4) & \
+                        (abs(group_y[int(dgp-1)]-group_y[int(dgp+1)])<6) & \
+                        ((abs(now_y-group_y[int(dgp-1)])>4)| \
+                        (abs(now_x-group_x[int(dgp-1)])>4)) & \
                         ((group_count[int(dgp)]<(group_count[int(dgp-1)])) | \
                         (group_count[int(dgp)]<(group_count[int(dgp+1)]))) & \
                           (group_lapse[int(dgp)]<60):
                               drop_group.append(dgp)                    
                 except:
                     pass
+
                 try:
-                    if (abs(group_y[int(dgp-1)]-group_y[int(dgp+1)])<6) & \
-                        (abs(now_y-group_y[int(dgp-1)])>4)& \
-                        ((group_count[int(dgp)]<(group_count[int(dgp-1)])) | \
-                        (group_count[int(dgp)]<(group_count[int(dgp+1)]))) & \
+                    if ((abs(now_x-group_x[int(dgp-1)])>6)|(abs(now_y-group_y[int(dgp-1)])>6)) &\
+                        (group_count[int(dgp)]<(group_count[int(dgp-1)])) & \
+                        (group_count[int(dgp)]<(group_count[int(dgp+1)])) & \
+                         (group_count[int(dgp)]<75) & \
+                          (group_lapse[int(dgp)]<180):
+                              drop_group.append(dgp)                      
+                except:
+                    pass
+
+                try:
+                    if (abs(group_x[int(dgp-1)]-group_x[int(dgp+1)])<3) & \
+                        (abs(group_y[int(dgp-1)]-group_y[int(dgp+1)])<3) & \
                           (group_lapse[int(dgp)]<60):
-                              drop_group.append(dgp)                       
-                except:
-                    pass
-                try:
-                    if (abs(now_x-group_x[int(dgp-1)])>6) & \
-                        (group_count[int(dgp)]<(group_count[int(dgp-1)])) & \
-                        (group_count[int(dgp)]<(group_count[int(dgp+1)])) & \
-                         (group_count[int(dgp)]<75) & \
-                          (group_lapse[int(dgp)]<180):
-                              drop_group.append(dgp)                     
-                except:
-                    pass
-                try:
-                    if (abs(now_y-group_y[int(dgp-1)])>6)& \
-                        (group_count[int(dgp)]<(group_count[int(dgp-1)])) & \
-                        (group_count[int(dgp)]<(group_count[int(dgp+1)])) & \
-                         (group_count[int(dgp)]<75) & \
-                          (group_lapse[int(dgp)]<180):
-                              drop_group.append(dgp)                          
+                              drop_group.append(dgp)                    
                 except:
                     pass
             drop_group=list(set(drop_group))
