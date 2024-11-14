@@ -92,29 +92,41 @@ for beacon in beacon_ids:
         for dgp in list(set(fly_group['group'])):
             now_x = group_x[int(dgp)]
             now_y = group_y[int(dgp)]
-            if now_x < -2 or now_x >27:
+            if now_x < -1 or now_x >26:
                 drop_group.append(dgp)
-            if now_y < -2 or now_y >27:
+            if now_y < -1 or now_y >26:
                 drop_group.append(dgp)
                 
             try:
                 if (abs(group_x[int(dgp-1)]-group_x[int(dgp+1)])<5) & \
                     (abs(now_x-group_x[int(dgp-1)])>5) & \
                     (group_count[int(dgp)]<(group_count[int(dgp-1)])) & \
-                     (group_count[int(dgp)]<30) & \
-                      (group_lapse[int(dgp)]<150):
-                          drop_group.append(dgp)
+                    (group_count[int(dgp)]<(group_count[int(dgp+1)])) & \
+                     (group_count[int(dgp)]<120) & \
+                      (group_lapse[int(dgp)]<180):
+                          drop_group.append(dgp)                    
+            except:
+                pass
+            try:
                 if (abs(group_y[int(dgp-1)]-group_y[int(dgp+1)])<5) & \
                     (abs(now_y-group_y[int(dgp-1)])>5)& \
-                     (group_count[int(dgp)]<30) & \
-                      (group_lapse[int(dgp)]<150):
-                          drop_group.append(dgp)
+                    (group_count[int(dgp)]<(group_count[int(dgp-1)])) & \
+                    (group_count[int(dgp)]<(group_count[int(dgp+1)])) & \
+                        (group_count[int(dgp)]<120) & \
+                      (group_lapse[int(dgp)]<180):
+                          drop_group.append(dgp)                       
+            except:
+                pass
+            try:
                 if (abs(now_x-group_x[int(dgp-1)])>5) & \
                     (group_count[int(dgp)]<(group_count[int(dgp-1)])) & \
                     (group_count[int(dgp)]<(group_count[int(dgp+1)])) & \
                      (group_count[int(dgp)]<60) & \
                       (group_lapse[int(dgp)]<120):
-                          drop_group.append(dgp)
+                          drop_group.append(dgp)                     
+            except:
+                pass
+            try:
                 if (abs(now_y-group_y[int(dgp-1)])>5)& \
                     (group_count[int(dgp)]<(group_count[int(dgp-1)])) & \
                     (group_count[int(dgp)]<(group_count[int(dgp+1)])) & \

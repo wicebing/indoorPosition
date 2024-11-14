@@ -92,7 +92,7 @@ def plot_trajectory(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint'):
         ax.scatter(x, y, c = clr, alpha=0.5, s = 15)
 
         # Add a line connecting the points
-        consecutive_indices = np.where(df['time_diff'].values > 60)
+        consecutive_indices = np.where(df['time_diff'].values > 30)
         if consecutive_indices[0].size > 1:
             cons_i = 0
             for i, idx in enumerate(consecutive_indices[0]):
@@ -168,5 +168,5 @@ def Trajectory_plot(drawPds,hours=1,flag='origin'):
         
         plot_trajectory(dfs, evt_x-x_min, evt_y-y_min, evt_what, pic_name=f'{i+1}_{發生地點}_{positionTime.hour}_{hours}hour_{flag}')
         
-Trajectory_plot(txyzPds,1,'filter_2')       
-Trajectory_plot(txyzPds_origin,1,'')      
+Trajectory_plot(txyzPds,8,'filter_3')       
+Trajectory_plot(txyzPds_origin,8,'')      
