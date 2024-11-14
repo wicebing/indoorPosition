@@ -40,13 +40,13 @@ def detect_and_label_outliers(df, window='3s'):
     dfc['time_diff'] = dfc['timesss'].diff().dt.total_seconds()
 
     dfc['group']=0
-    dfc.loc[(((dfc['x']-dfc['x_m1']).abs()>3) | ((dfc['y']-dfc['y_m1']).abs()>3)), 'group'] +=1
+    dfc.loc[(((dfc['x']-dfc['x_m1']).abs()>5) | ((dfc['y']-dfc['y_m1']).abs()>5)), 'group'] +=1
     dfc.loc[(((dfc['x']-dfc['x_m1']).abs()>10) | ((dfc['y']-dfc['y_m1']).abs()>10)) & (dfc['time_diff']<5), 'group'] +=1
-    dfc.loc[(dfc['time_diff'] > 150), 'group'] +=1
+    dfc.loc[(((dfc['x']-dfc['x_m1']).abs()>3) | ((dfc['y']-dfc['y_m1']).abs()>3)) & (dfc['time_diff'] > 90), 'group'] +=1
     dfc.loc[(((dfc['x']-dfc['x_avg']).abs()>3) | ((dfc['y']-dfc['y_avg']).abs()>3)), 'fly'] = True
     dfc.loc[(((dfc['x']-dfc['x_avg']).abs()>15) | ((dfc['y']-dfc['y_avg']).abs()>15)) & (dfc['time_diff'] < 10), 'fly'] = True
     
-    dfc['fly'] = dfc['fly'].fillna(False) # handle cases where no outlier was detected.
+    dfc['fly'] = dfc['fly'].fillna(False).infer_objects(copy=False) # handle cases where no outlier was detected.
     dfc['group'] = dfc['group'].cumsum()
     return dfc
 
@@ -69,7 +69,10 @@ for beacon in beacon_ids:
         
         aao = df.dropna().copy().set_index('positionTime')
         aao['timesss'] = aao.index
-        txyzOutlier[beacon] = {'origin':len(aao),'outlier':0}
+        out_boundary = (aao['x']<0)|((aao['x']>25))|(aao['y']<0)|((aao['y']>25))
+        txyzOutlier[beacon] = {'origin':len(aao),'outlier':out_boundary.sum()}
+        aao = aao.loc[~out_boundary]
+        
         outliers = 1
         while(outliers>0):
             aa = detect_and_label_outliers(aao, window='3s')
@@ -80,71 +83,72 @@ for beacon in beacon_ids:
             print(len(aa)-len(aao),len(aa),len(aao))
             outliers = len(aa)-len(aao)
             txyzOutlier[beacon]['outlier'] += outliers
-        
-        aa = detect_and_label_outliers(aao, window='3s')
-        group_x = aa.groupby('group')['x'].mean()
-        group_y = aa.groupby('group')['y'].mean()
-        group_lapse = aa.groupby('group')['time_diff'].sum()
-        group_count = aa.value_counts('group')
-        
-        fly_group = aa[aa.fly]
-        
-        drop_group = []
-        
-        for dgp in list(set(fly_group['group'])):
-            now_x = group_x[int(dgp)]
-            now_y = group_y[int(dgp)]
-            if now_x < -1 or now_x >26:
-                drop_group.append(dgp)
-            if now_y < -1 or now_y >26:
-                drop_group.append(dgp)
                 
-            try:
-                if (abs(group_x[int(dgp-1)]-group_x[int(dgp+1)])<5) & \
-                    (abs(now_x-group_x[int(dgp-1)])>5) & \
-                    (group_count[int(dgp)]<(group_count[int(dgp-1)])) & \
-                    (group_count[int(dgp)]<(group_count[int(dgp+1)])) & \
-                     (group_count[int(dgp)]<30) & \
-                      (group_lapse[int(dgp)]<60):
-                          drop_group.append(dgp)                    
-            except:
-                pass
-            try:
-                if (abs(group_y[int(dgp-1)]-group_y[int(dgp+1)])<5) & \
-                    (abs(now_y-group_y[int(dgp-1)])>5)& \
-                    (group_count[int(dgp)]<(group_count[int(dgp-1)])) & \
-                    (group_count[int(dgp)]<(group_count[int(dgp+1)])) & \
-                        (group_count[int(dgp)]<30) & \
-                      (group_lapse[int(dgp)]<60):
-                          drop_group.append(dgp)                       
-            except:
-                pass
-            try:
-                if (abs(now_x-group_x[int(dgp-1)])>5) & \
-                    (group_count[int(dgp)]<(group_count[int(dgp-1)])) & \
-                    (group_count[int(dgp)]<(group_count[int(dgp+1)])) & \
-                     (group_count[int(dgp)]<60) & \
-                      (group_lapse[int(dgp)]<120):
-                          drop_group.append(dgp)                     
-            except:
-                pass
-            try:
-                if (abs(now_y-group_y[int(dgp-1)])>5)& \
-                    (group_count[int(dgp)]<(group_count[int(dgp-1)])) & \
-                    (group_count[int(dgp)]<(group_count[int(dgp+1)])) & \
-                     (group_count[int(dgp)]<60) & \
-                      (group_lapse[int(dgp)]<120):
-                          drop_group.append(dgp)                          
-            except:
-                pass
-        drop_group=list(set(drop_group))
+        for i in range(2):
+            aa = detect_and_label_outliers(aao, window='3s')
+            group_x = aa.groupby('group')['x'].mean()
+            group_y = aa.groupby('group')['y'].mean()
+            group_lapse = aa.groupby('group')['time_diff'].sum()
+            group_count = aa.value_counts('group')
+            
+            fly_group = aa[aa.fly]
+            
+            drop_group = []
+            
+            for dgp in list(set(fly_group['group'])):
+                now_x = group_x[int(dgp)]
+                now_y = group_y[int(dgp)]
+                if now_x < -1 or now_x >26:
+                    drop_group.append(dgp)
+                if now_y < -1 or now_y >26:
+                    drop_group.append(dgp)
+                    
+                try:
+                    if (abs(group_x[int(dgp-1)]-group_x[int(dgp+1)])<6) & \
+                        (abs(now_x-group_x[int(dgp-1)])>4) & \
+                        (group_count[int(dgp)]<(group_count[int(dgp-1)])) & \
+                        (group_count[int(dgp)]<(group_count[int(dgp+1)])) & \
+                          (group_lapse[int(dgp)]<60):
+                              drop_group.append(dgp)                    
+                except:
+                    pass
+                try:
+                    if (abs(group_y[int(dgp-1)]-group_y[int(dgp+1)])<6) & \
+                        (abs(now_y-group_y[int(dgp-1)])>4)& \
+                        (group_count[int(dgp)]<(group_count[int(dgp-1)])) & \
+                        (group_count[int(dgp)]<(group_count[int(dgp+1)])) & \
+                          (group_lapse[int(dgp)]<60):
+                              drop_group.append(dgp)                       
+                except:
+                    pass
+                try:
+                    if (abs(now_x-group_x[int(dgp-1)])>6) & \
+                        (group_count[int(dgp)]<(group_count[int(dgp-1)])) & \
+                        (group_count[int(dgp)]<(group_count[int(dgp+1)])) & \
+                         (group_count[int(dgp)]<150) & \
+                          (group_lapse[int(dgp)]<180):
+                              drop_group.append(dgp)                     
+                except:
+                    pass
+                try:
+                    if (abs(now_y-group_y[int(dgp-1)])>6)& \
+                        (group_count[int(dgp)]<(group_count[int(dgp-1)])) & \
+                        (group_count[int(dgp)]<(group_count[int(dgp+1)])) & \
+                         (group_count[int(dgp)]<150) & \
+                          (group_lapse[int(dgp)]<180):
+                              drop_group.append(dgp)                          
+                except:
+                    pass
+            drop_group=list(set(drop_group))
+            
+            for dpg in drop_group:
+                drop = aa['group']==dpg
+                txyzOutlier[beacon]['outlier'] += drop.sum()
+                print(f'drop {i} group{dpg} {drop.sum()}')
+                aa = aa.loc[~drop]
+            aao = aao.loc[aa.index]
         
-        for dpg in drop_group:
-            drop = aa['group']==dpg
-            txyzOutlier[beacon]['outlier'] += drop.sum()
-            aa = aa.loc[~drop]
-        
-        txyzPds[beacon]=aa.reset_index()
+        txyzPds[beacon]=aao.reset_index()
     
 
 with open("./guider20240808/databank/pkl/origin.pkl", 'wb') as f:
