@@ -168,7 +168,10 @@ events = events[['positionTime','發生地點','事件分類', 'X', 'Y']]
 with open("./guider20240808/databank/pkl/origin.pkl", 'rb') as f:
     txyzPds_origin = pickle.load(f)
 with open("./guider20240808/databank/pkl/filter01.pkl", 'rb') as f:
-    txyzPds = pickle.load(f)        
- 
-Trajectory_plot(events, txyzPds,8,'filter_0',grid=True)       
-# Trajectory_plot(events, txyzPds_origin,8,'',grid=False)      
+    txyzPds = pickle.load(f)   
+with open("./guider20240808/databank/pkl/KalmanSmooth01.pkl", 'rb') as f:
+    txyzPds_smooth = pickle.load(f)
+
+Trajectory_plot(events, txyzPds_smooth,3,'smooth_0',grid=False)       
+Trajectory_plot(events, txyzPds,3,'filter_0',grid=False)       
+Trajectory_plot(events, txyzPds_origin,3,'',grid=False)      

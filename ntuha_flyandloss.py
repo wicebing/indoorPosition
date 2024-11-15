@@ -7,7 +7,6 @@ from matplotlib.animation import FuncAnimation
 import matplotlib.colors as mcolors
 from matplotlib.colors import to_rgb, to_rgba
 
-from scipy.interpolate import interp1d
 from pykalman import KalmanFilter
 from scipy.signal import savgol_filter
 
@@ -31,6 +30,7 @@ scale = 45
 grid_size = 45
 txyzPds = {}
 txyzPds_origin = {}
+txyzPds_smooth = {}
 txyzOutlier = {}
 
 def filter_single(df, time_col='positionTime'):
@@ -170,11 +170,26 @@ for beacon in beacon_ids:
                 while_loop += 1            
         
         txyzPds[beacon]=aao
-    
+        
+        print(' == doing the smooth ==')
+        aa = filter_single(aao)
+        for sk in range(aa.skip.max()):
+            print(f' == smooth {beacon} {sk} ==')
+            temp = aa[aa['skip']==sk].copy()
+            for axs in ['x','y']:
+                initial_state_mean = temp.iloc[0][axs]
+                kf = KalmanFilter(initial_state_mean=initial_state_mean)
+                smoothed_k = kf.smooth(temp[axs])[0]
+                
+                aa.loc[temp.index,[axs]] = smoothed_k
+                
+        txyzPds_smooth[beacon]=aa['positionTime', 'x', 'y', 'z'].copy()
+        
 
 with open("./guider20240808/databank/pkl/origin.pkl", 'wb') as f:
     pickle.dump(txyzPds_origin, f)    
 with open("./guider20240808/databank/pkl/filter01.pkl", 'wb') as f:
     pickle.dump(txyzPds, f)
-
+with open("./guider20240808/databank/pkl/KalmanSmooth01.pkl", 'wb') as f:
+    pickle.dump(txyzPds_smooth, f)
 pd.DataFrame(txyzOutlier).to_excel('./output/outliers.xlsx')
