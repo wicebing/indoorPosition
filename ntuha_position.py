@@ -43,7 +43,7 @@ grid_size = 45
         
 #         txyzPds[beacon]=df
 
-def plot_trajectory(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint'):
+def plot_trajectory(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint',grid=False):
     """Plots the trajectory of points from a DataFrame.
 
     Args:
@@ -93,7 +93,7 @@ def plot_trajectory(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint'):
         ax.scatter(x, y, c = clr, alpha=0.5, s = 15)
 
         # Add a line connecting the points
-        consecutive_indices = np.where(df['time_diff'].values > 333)
+        consecutive_indices = np.where(df['time_diff'].values > 66)
         if consecutive_indices[0].size > 1:
             cons_i = 0
             for i, idx in enumerate(consecutive_indices[0]):
@@ -120,8 +120,9 @@ def plot_trajectory(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint'):
     ax.grid(which='major', alpha=0.5, linestyle='--')
     ax.set_xticks(major_ticks)
     ax.set_yticks(major_ticks)
-    plt.xticks([])
-    plt.yticks([])
+    if(not grid):
+        plt.xticks([])
+        plt.yticks([])
     
     ax.set_xlim(0,scale*(x_max-x_min))
     ax.set_ylim(0,scale*(y_max-y_min))
@@ -136,7 +137,7 @@ def plot_trajectory(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint'):
     print(f' === complete {pic_name} image === ')
 
 # Draw Trajectory 
-def Trajectory_plot(events, drawPds,hours=1,flag='origin'):
+def Trajectory_plot(events, drawPds,hours=1,flag='origin',grid=False):
     for i, evt in events.iterrows():
         print(f' == work on {i} event == ')
         positionTime = evt['positionTime']
@@ -154,7 +155,7 @@ def Trajectory_plot(events, drawPds,hours=1,flag='origin'):
             if len(df) > 0:
                 dfs[beacon]=df
         
-        plot_trajectory(dfs, evt_x-x_min, evt_y-y_min, evt_what, pic_name=f'{i+1}_{發生地點}_{positionTime.hour}_{hours}hour_{flag}')
+        plot_trajectory(dfs, evt_x-x_min, evt_y-y_min, evt_what, pic_name=f'{i+1}_{發生地點}_{positionTime.hour}_{hours}hour_{flag}', grid=grid)
  
 # Load the event timePoint
 events = pd.read_excel("./guider20240808/databank/events.xlsx")
@@ -169,5 +170,5 @@ with open("./guider20240808/databank/pkl/origin.pkl", 'rb') as f:
 with open("./guider20240808/databank/pkl/filter01.pkl", 'rb') as f:
     txyzPds = pickle.load(f)        
  
-Trajectory_plot(events, txyzPds,8,'filter_0')       
-Trajectory_plot(events, txyzPds_origin,8,'')      
+Trajectory_plot(events, txyzPds,8,'filter_0',grid=True)       
+# Trajectory_plot(events, txyzPds_origin,8,'',grid=False)      

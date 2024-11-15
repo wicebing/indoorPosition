@@ -42,12 +42,12 @@ def filter_single(df, time_col='positionTime'):
     dfc['time_diff'] = dfc[time_col].diff().dt.total_seconds()
     dfc['position_diff'] = (dfc['x_diff']**2 + dfc['y_diff']**2)**0.5
     
-    dfc['group'] = dfc['position_diff'] > 1.5*dfc['time_diff']
+    dfc['group'] = dfc['position_diff'] > 2.5
     # Handle cases with large missing time gaps
     dfc['skip'] = 0
     
-    dfc.loc[(dfc['time_diff']>333) & (dfc['position_diff']>2), 'skip'] +=1
-    dfc.loc[(dfc['time_diff']>333) & (dfc['position_diff']>2), 'group'] = True
+    dfc.loc[(dfc['time_diff']>10) & (dfc['position_diff']>2), 'skip'] +=1
+    dfc.loc[(dfc['time_diff']>10) & (dfc['position_diff']>2), 'group'] = True
     dfc['skip'] = dfc['skip'].cumsum()
     dfc['group'] = dfc['group'].cumsum()
 
@@ -90,25 +90,76 @@ for beacon in beacon_ids:
             outliers = len(aa)-len(aao)
             txyzOutlier[beacon]['outlier'] += outliers
         
-        for threshold in range(15):
-            outliers = 1
-            while(outliers>0):
-                aa = filter_single(aao)
-                group_lapse = aa.groupby('group')['time_diff'].sum()
-                aa['group_lapse'] = group_lapse[aa.group].values
-                skip_count = aa.value_counts('skip')
-                aa['skip_num'] = skip_count[aa.skip].values
-                group_count = aa.value_counts('group')
-                aa['group_num'] = group_count[aa.group].values
-                if threshold < 5:
-                    drop = (aa['group_num']<=threshold)
-                else:
-                    drop = (aa['group_num']<=threshold) & (aa['group_lapse']<=60*threshold)
-                aao = aao.loc[~drop]
-                print(threshold,drop.sum(),len(aa)-len(aao),len(aa),len(aao))
-                outliers = len(aa)-len(aao)
-                txyzOutlier[beacon]['outlier'] += outliers
+        threshold = 2
+        outliers = 1
+        while(outliers>0):
+            aa = filter_single(aao)
+            group_lapse = aa.groupby('group')['time_diff'].sum()
+            aa['group_lapse'] = group_lapse[aa.group].values
+            skip_count = aa.value_counts('skip')
+            aa['skip_num'] = skip_count[aa.skip].values
+            group_count = aa.value_counts('group')
+            aa['group_num'] = group_count[aa.group].values
+            drop = (aa['group_num']<=threshold)
+            aao = aao.loc[~drop]
+            print(threshold,drop.sum(),len(aa)-len(aao),len(aa),len(aao))
+            outliers = len(aa)-len(aao)
+            txyzOutlier[beacon]['outlier'] += outliers
 
+
+        outliers_group = 1
+        while_loop = 0
+        
+        while(outliers_group>0):
+            aa = filter_single(aao)
+            groupInTime= aa.groupby('group')['skip'].value_counts()
+            groupInTime = groupInTime.reset_index().set_index('group')
+            group_lastxy = aa.groupby('group')[['x','y']].last()
+            group_firstxy = aa.groupby('group')[['x','y']].first()
+            group_diff = aa.groupby('group')[['time_diff','position_diff']].first()
+            group_x = aa.groupby('group')['x'].mean()
+            group_y = aa.groupby('group')['y'].mean()   
+    
+            drop_group = []
+            for gp in range(len(groupInTime)):
+                now_x = group_x[gp]
+                now_y = group_y[gp]
+                if now_x < 1 or now_x >24:
+                    drop_group.append(gp)
+                if now_y < 1 or now_y >26:
+                    drop_group.append(gp)
+                    
+                if gp==0: continue
+            
+                skip_now = groupInTime.loc[gp]['skip']
+                skip_m1 = groupInTime.loc[gp-1]['skip']
+                if skip_now > skip_m1: continue
+            
+                sss = group_diff.loc[gp]
+                if sss['position_diff'] < 2*sss['time_diff']: continue
+    
+                xm1,ym1 = group_lastxy.loc[gp-1]
+                x1,y1 = group_firstxy.loc[gp]          
+                if xm1<=10 and (x1>12 or now_x>13):
+                    drop_group.append(gp)
+                    
+            drop_group=list(set(drop_group))
+            outliers_group = len(drop_group)
+            
+            if outliers_group >0:
+                drop_idx_ = []
+                for dpg in drop_group:
+                    drop = aa['group']==dpg
+                    drop_idx_.append(drop)
+                    # txyzOutlier[beacon]['outlier'] += drop.sum()
+                    # print(f'drop {while_loop} group{dpg} {drop.sum()}')
+                    # aa = aa.loc[~drop]
+                drop_idx = pd.concat(drop_idx_,axis=1)
+                dropAll = drop_idx.sum(axis=1).astype(bool)
+                txyzOutlier[beacon]['outlier'] += dropAll.sum()
+                print(f'drop {while_loop} {dropAll.sum()}')
+                aao = aao.loc[~dropAll]
+                while_loop += 1            
         
         txyzPds[beacon]=aao.reset_index()
     
