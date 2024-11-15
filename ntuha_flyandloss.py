@@ -71,7 +71,6 @@ for beacon in beacon_ids:
         txyzPds_origin[beacon]=df
         
         aao = df.dropna().copy()
-        aao['timesss'] = aao.index
         out_boundary = (aao['x']<0)|((aao['x']>25))|(aao['y']<0)|((aao['y']>25))
         txyzOutlier[beacon] = {'origin':len(aao),'outlier':0, 'out_boundary':out_boundary.sum()}
         print(f'out_boundary {out_boundary.sum()}')
@@ -120,6 +119,7 @@ for beacon in beacon_ids:
             group_x = aa.groupby('group')['x'].mean()
             group_y = aa.groupby('group')['y'].mean()
             group_count = aa.value_counts('group')
+            group_lapse = aa.groupby('group')['time_diff'].sum()
     
             drop_group = []
             for gp in range(len(groupInTime)):
@@ -141,16 +141,16 @@ for beacon in beacon_ids:
                 if skip_now > skip_m1: continue        
                 if sss['position_diff'] < sss['time_diff']: 
                     if xm1<=9.5 and (x1>10.5 or now_x>11):
-                        if group_count[gp]<60:
+                        if group_count[gp]<60 or group_lapse[gp] <60:
                             drop_group.append(gp)
                     continue        
                 if xm1<=9.5 and (x1>10.5 or now_x>11):
-                    if group_count[gp]<60:
+                    if group_count[gp]<60 or group_lapse[gp] <60:
                         drop_group.append(gp)
                 
                 now_xm1 = group_x[gp-1]
                 if x1<=9.5 and (xm1>10.5):
-                    if group_count[gp]<60:
+                    if group_count[gp-1]<60 or group_lapse[gp-1] <60:
                         drop_group.append(gp-1)
                     
             drop_group=list(set(drop_group))
@@ -161,9 +161,7 @@ for beacon in beacon_ids:
                 for dpg in drop_group:
                     drop = aa['group']==dpg
                     drop_idx_.append(drop)
-                    # txyzOutlier[beacon]['outlier'] += drop.sum()
-                    # print(f'drop {while_loop} group{dpg} {drop.sum()}')
-                    # aa = aa.loc[~drop]
+
                 drop_idx = pd.concat(drop_idx_,axis=1)
                 dropAll = drop_idx.sum(axis=1).astype(bool)
                 txyzOutlier[beacon]['outlier'] += dropAll.sum()
@@ -171,7 +169,7 @@ for beacon in beacon_ids:
                 aao = aao.loc[~dropAll]
                 while_loop += 1            
         
-        txyzPds[beacon]=aao.reset_index()
+        txyzPds[beacon]=aao
     
 
 with open("./guider20240808/databank/pkl/origin.pkl", 'wb') as f:
