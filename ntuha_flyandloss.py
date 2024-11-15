@@ -140,8 +140,12 @@ for beacon in beacon_ids:
     
                 xm1,ym1 = group_lastxy.loc[gp-1]
                 x1,y1 = group_firstxy.loc[gp]          
-                if xm1<=10 and (x1>12 or now_x>13):
+                if xm1<=9.5 and (x1>10.5 or now_x>11):
                     drop_group.append(gp)
+                
+                now_xm1 = group_x[gp-1]
+                if x1<=9.5 and (xm1>10.5 or now_xm1>11):
+                    drop_group.append(gp-1)
                     
             drop_group=list(set(drop_group))
             outliers_group = len(drop_group)

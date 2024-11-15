@@ -93,7 +93,7 @@ def plot_trajectory(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint',grid=Fa
         ax.scatter(x, y, c = clr, alpha=0.5, s = 15)
 
         # Add a line connecting the points
-        consecutive_indices = np.where(df['time_diff'].values > 66)
+        consecutive_indices = np.where(df['time_diff'].values > 10)
         if consecutive_indices[0].size > 1:
             cons_i = 0
             for i, idx in enumerate(consecutive_indices[0]):
