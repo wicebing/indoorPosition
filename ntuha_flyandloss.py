@@ -118,7 +118,8 @@ for beacon in beacon_ids:
             group_firstxy = aa.groupby('group')[['x','y']].first()
             group_diff = aa.groupby('group')[['time_diff','position_diff']].first()
             group_x = aa.groupby('group')['x'].mean()
-            group_y = aa.groupby('group')['y'].mean()   
+            group_y = aa.groupby('group')['y'].mean()
+            group_count = aa.value_counts('group')
     
             drop_group = []
             for gp in range(len(groupInTime)):
@@ -133,19 +134,24 @@ for beacon in beacon_ids:
             
                 skip_now = groupInTime.loc[gp]['skip']
                 skip_m1 = groupInTime.loc[gp-1]['skip']
-                if skip_now > skip_m1: continue
-            
                 sss = group_diff.loc[gp]
-                if sss['position_diff'] < 2*sss['time_diff']: continue
-    
                 xm1,ym1 = group_lastxy.loc[gp-1]
-                x1,y1 = group_firstxy.loc[gp]          
+                x1,y1 = group_firstxy.loc[gp] 
+                
+                if skip_now > skip_m1: continue        
+                if sss['position_diff'] < sss['time_diff']: 
+                    if xm1<=9.5 and (x1>10.5 or now_x>11):
+                        if group_count[gp]<60:
+                            drop_group.append(gp)
+                    continue        
                 if xm1<=9.5 and (x1>10.5 or now_x>11):
-                    drop_group.append(gp)
+                    if group_count[gp]<60:
+                        drop_group.append(gp)
                 
                 now_xm1 = group_x[gp-1]
-                if x1<=9.5 and (xm1>10.5 or now_xm1>11):
-                    drop_group.append(gp-1)
+                if x1<=9.5 and (xm1>10.5):
+                    if group_count[gp]<60:
+                        drop_group.append(gp-1)
                     
             drop_group=list(set(drop_group))
             outliers_group = len(drop_group)
