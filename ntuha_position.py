@@ -93,7 +93,7 @@ def plot_trajectory(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint'):
         ax.scatter(x, y, c = clr, alpha=0.5, s = 15)
 
         # Add a line connecting the points
-        consecutive_indices = np.where(df['time_diff'].values > 30)
+        consecutive_indices = np.where(df['time_diff'].values > 333)
         if consecutive_indices[0].size > 1:
             cons_i = 0
             for i, idx in enumerate(consecutive_indices[0]):
@@ -169,5 +169,5 @@ with open("./guider20240808/databank/pkl/origin.pkl", 'rb') as f:
 with open("./guider20240808/databank/pkl/filter01.pkl", 'rb') as f:
     txyzPds = pickle.load(f)        
  
-Trajectory_plot(events, txyzPds,8,'filter_4')       
-# Trajectory_plot(events, txyzPds_origin,8,'')      
+Trajectory_plot(events, txyzPds,8,'filter_0')       
+Trajectory_plot(events, txyzPds_origin,8,'')      
