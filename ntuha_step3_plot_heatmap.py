@@ -47,7 +47,8 @@ grid_size = 45
 
 
 def create_gif(pic_dir, output_gif_path="output.gif", duration=300):
-    image_paths = glob.glob('')
+    image_paths = glob.glob(f'{pic_dir}/*.png')
+    image_paths.sort(reverse=True)
     images = [Image.open(image_path) for image_path in image_paths]
     # Save as GIF
     images[0].save(
@@ -118,19 +119,23 @@ def plot_heatmap(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint',grid=False
         
             for i, j in zip(grid_x, grid_y):
                 # Use safe indexing to avoid out-of-bounds errors
-                x_min_index = max(0, i-2)
-                x_max_index = min(heatmap_cols - 1, i + 2)
-                y_min_index = max(0, j-2)
-                y_max_index = min(heatmap_rows - 1, j + 2)
+                x_min_index = max(0, i-3)
+                x_max_index = min(heatmap_cols - 1, i + 3)
+                y_min_index = max(0, j-3)
+                y_max_index = min(heatmap_rows - 1, j + 3)
         
                 for x_index in range(x_min_index, x_max_index + 1):
                     for y_index in range(y_min_index, y_max_index + 1):
-                        if (x_index == i-2 & y_index == j-2) or \
-                            (x_index == i+2 & y_index == j-2) or \
-                            (x_index == i-2 & y_index == j+2) or \
-                            (x_index == i+2 & y_index == j+2):
+                        if (x_index == i-3 & y_index == j-3) or \
+                            (x_index == i+3 & y_index == j-3) or \
+                            (x_index == i-3 & y_index == j+3) or \
+                            (x_index == i+3 & y_index == j+3):
                                 continue
-                        heatmap[y_index, x_index] += 1
+                        if abs(y_index-i)<2 or abs(x_index-i)<2:
+                            heatmap[y_index, x_index] += 3
+                        else:
+                            heatmap[y_index, x_index] += 1
+
             heatmap = np.minimum(heatmap, max_heatmap_value)
 
             for ri in range(heatmap_rows):
@@ -175,6 +180,8 @@ def plot_heatmap(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint',grid=False
             
             plt.savefig(fname=pic_filepath)
             print(f' === complete {pic_name}{beforeEvtMin} image === ')
+    output_gif_path = f'./output/heatmap/{pic_name}.gif'
+    create_gif(os.path.dirname(pic_filepath), output_gif_path=output_gif_path, duration=300)
 
 # Draw Trajectory 
 def heatmap_plot(events, drawPds,hours=1,flag='origin',grid=False):
@@ -205,7 +212,6 @@ def heatmap_plot(events, drawPds,hours=1,flag='origin',grid=False):
                      evt_what=evt_what,
                      pic_name=f'{i+1}_{發生地點}_{positionTime.hour}_{hours}hour_{flag}',
                      grid=grid)
-        break
  
 # Load the event timePoint
 events = pd.read_excel("./guider20240808/databank/events.xlsx")
