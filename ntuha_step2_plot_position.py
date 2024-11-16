@@ -173,6 +173,6 @@ with open("./guider20240808/databank/pkl/filter01.pkl", 'rb') as f:
 with open("./guider20240808/databank/pkl/KalmanSmooth01.pkl", 'rb') as f:
     txyzPds_smooth = pickle.load(f)
 
-Trajectory_plot(events, txyzPds_smooth,3,'smooth_0',grid=False)       
-Trajectory_plot(events, txyzPds,3,'filter_0',grid=False)       
-Trajectory_plot(events, txyzPds_origin,3,'',grid=False)      
+Trajectory_plot(events, txyzPds_smooth,1,'smooth_0',grid=False)       
+Trajectory_plot(events, txyzPds,1,'filter_0',grid=False)       
+Trajectory_plot(events, txyzPds_origin,1,'',grid=False)      

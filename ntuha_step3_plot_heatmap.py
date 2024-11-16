@@ -181,11 +181,15 @@ def plot_heatmap(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint',grid=False
             plt.savefig(fname=pic_filepath)
             print(f' === complete {pic_name}{beforeEvtMin} image === ')
     output_gif_path = f'./output/heatmap/{pic_name}.gif'
-    create_gif(os.path.dirname(pic_filepath), output_gif_path=output_gif_path, duration=300)
+    create_gif(pic_dir=os.path.dirname(pic_filepath), 
+               output_gif_path=output_gif_path, 
+               duration=300)
 
 # Draw Trajectory 
 def heatmap_plot(events, drawPds,hours=1,flag='origin',grid=False):
     for i, evt in events.iterrows():
+        
+        if i < 22: continue
         print(f' == work on {i} event == ')
         positionTime = evt['positionTime']
         e_x = evt['X']

@@ -171,25 +171,25 @@ for beacon in beacon_ids:
         
         txyzPds[beacon]=aao
         
-        print(' == doing the smooth ==')
-        aa = filter_single(aao)
-        for sk in range(aa.skip.max()):
-            print(f' == smooth {beacon} {sk} ==')
-            temp = aa[aa['skip']==sk].copy()
-            for axs in ['x','y']:
-                initial_state_mean = temp.iloc[0][axs]
-                kf = KalmanFilter(initial_state_mean=initial_state_mean)
-                smoothed_k = kf.smooth(temp[axs])[0]
+        # print(' == doing the smooth ==')
+        # aa = filter_single(aao)
+        # for sk in range(aa.skip.max()):
+        #     print(f' == smooth {beacon} {sk} ==')
+        #     temp = aa[aa['skip']==sk].copy()
+        #     for axs in ['x','y']:
+        #         initial_state_mean = temp.iloc[0][axs]
+        #         kf = KalmanFilter(initial_state_mean=initial_state_mean)
+        #         smoothed_k = kf.smooth(temp[axs])[0]
                 
-                aa.loc[temp.index,[axs]] = smoothed_k
+        #         aa.loc[temp.index,[axs]] = smoothed_k
                 
-        txyzPds_smooth[beacon]=aa
+        # txyzPds_smooth[beacon]=aa
         
 
 with open("./guider20240808/databank/pkl/origin.pkl", 'wb') as f:
     pickle.dump(txyzPds_origin, f)    
 with open("./guider20240808/databank/pkl/filter01.pkl", 'wb') as f:
     pickle.dump(txyzPds, f)
-with open("./guider20240808/databank/pkl/KalmanSmooth01.pkl", 'wb') as f:
-    pickle.dump(txyzPds_smooth, f)
+# with open("./guider20240808/databank/pkl/KalmanSmooth01.pkl", 'wb') as f:
+#     pickle.dump(txyzPds_smooth, f)
 pd.DataFrame(txyzOutlier).to_excel('./output/outliers.xlsx')
