@@ -97,13 +97,13 @@ def plot_trajectory(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint',grid=Fa
         if consecutive_indices[0].size > 1:
             cons_i = 0
             for i, idx in enumerate(consecutive_indices[0]):
-                x_consecutive = x[cons_i:idx]
-                y_consecutive = y[cons_i:idx]
-                ax.plot(x_consecutive, y_consecutive, color=colors[k], alpha = 0.1, linestyle = '-')
-                cons_i=idx
-            if i == consecutive_indices[0].size-1:
-                x_consecutive = x[cons_i:]
-                y_consecutive = y[cons_i:]
+                if i == consecutive_indices[0].size-1:
+                    x_consecutive = x[cons_i:]
+                    y_consecutive = y[cons_i:]
+                else:
+                    x_consecutive = x[cons_i:idx]
+                    y_consecutive = y[cons_i:idx]
+                    cons_i=idx                
                 ax.plot(x_consecutive, y_consecutive, color=colors[k], alpha = 0.1, linestyle = '-')
         else:
             ax.plot(x, y, color=colors[k], alpha = 0.1, linestyle = '-') 
