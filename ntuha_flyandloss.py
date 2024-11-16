@@ -183,7 +183,7 @@ for beacon in beacon_ids:
                 
                 aa.loc[temp.index,[axs]] = smoothed_k
                 
-        txyzPds_smooth[beacon]=aa['positionTime', 'x', 'y', 'z'].copy()
+        txyzPds_smooth[beacon]=aa
         
 
 with open("./guider20240808/databank/pkl/origin.pkl", 'wb') as f:

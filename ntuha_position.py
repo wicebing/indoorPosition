@@ -145,13 +145,14 @@ def Trajectory_plot(events, drawPds,hours=1,flag='origin',grid=False):
         evt_y = evt['Y']
         evt_what = evt['事件分類']
         發生地點 = evt['發生地點']
-        startTime = positionTime-datetime.timedelta(hours=hours)
+        endtime = positionTime-datetime.timedelta(minutes=30)
+        startTime = endtime-datetime.timedelta(hours=hours)
         
         # if i != 30:
         #     continue
         dfs = {}
         for beacon in select_beacons:
-            df = drawPds[beacon].loc[(drawPds[beacon]['positionTime'] >= startTime) & (drawPds[beacon]['positionTime'] <= positionTime)]    
+            df = drawPds[beacon].loc[(drawPds[beacon]['positionTime'] >= startTime) & (drawPds[beacon]['positionTime'] <= endtime)]    
             if len(df) > 0:
                 dfs[beacon]=df
         
