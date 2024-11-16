@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from PIL import Image
-import datetime,os,math, pytz, json, pickle
+import datetime,os,math, pytz, json, pickle, glob
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import matplotlib.patches as mpatches
@@ -45,6 +45,19 @@ grid_size = 45
         
 #         txyzPds[beacon]=df
 
+
+def create_gif(pic_dir, output_gif_path="output.gif", duration=300):
+    image_paths = glob.glob('')
+    images = [Image.open(image_path) for image_path in image_paths]
+    # Save as GIF
+    images[0].save(
+    output_gif_path,
+    save_all=True,
+    append_images=images[1:],
+    duration=duration,
+    loop=0 # 0 means infinite loop
+    )
+
 def plot_heatmap(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint',grid=False):
     """Plots the trajectory of points from a DataFrame.
 
@@ -74,13 +87,14 @@ def plot_heatmap(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint',grid=False
     df['min_diff'] = df['beforeEvtMin'].diff().fillna(0)
     consecutive_indices = np.where(df['min_diff'].values < 0)
     heatmap = np.zeros((heatmap_rows, heatmap_cols), dtype=float)
+    gifs = []
     if consecutive_indices[0].size > 1:
         cons_i = 0
-        max_heatmap_value = 1000
+        max_heatmap_value = 100
         min_heatmap_value = 0
         for ixxx, idx in enumerate(consecutive_indices[0]):
             min_diff,beforeEvtMin =df.iloc[idx][['min_diff','beforeEvtMin']]
-            heatmap += 1*min_diff
+            heatmap += 3*min_diff
             heatmap = np.maximum(heatmap, min_heatmap_value)
             if ixxx == consecutive_indices[0].size-1:
                 x_consecutive = x[cons_i:]
@@ -92,7 +106,6 @@ def plot_heatmap(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint',grid=False
 
             fig, ax = plt.subplots(figsize=(10, 10))  # adjust figsize for better view
             ax.imshow(img_array)            
-            ax.scatter(x_consecutive, y_consecutive, c = 'violet', alpha=0.3, s = 15)
 
             # Calculate grid cell indices
             grid_x = np.floor(x_consecutive / grid_size).astype(int)
@@ -122,13 +135,15 @@ def plot_heatmap(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint',grid=False
 
             for ri in range(heatmap_rows):
                 for rj in range(heatmap_cols):
-                    alpha = -1*(heatmap[ri,rj]/1000) + 1
+                    alpha = -1*(heatmap[ri,rj]/max_heatmap_value) + 1
 
                     rect = mpatches.Rectangle((rj*grid_size,ri*grid_size), grid_size, grid_size,
                                               alpha=alpha,
                                               facecolor='navy',
                                               color='navy')
                     ax.add_patch(rect)
+
+            ax.scatter(x_consecutive, y_consecutive, c = 'violet', alpha=0.3, s = 15)
 
             # plot event point
             if evt_what == '轉重症':
@@ -155,7 +170,10 @@ def plot_heatmap(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint',grid=False
         
             # plt.axis('off')
             plt.grid(True)
-            plt.savefig(fname=f'./output/heatmap/{pic_name}_{beforeEvtMin}.png')
+            pic_filepath = f'./output/heatmap/{pic_name}/{str(int(beforeEvtMin)).rjust(6,"0")}.png'
+            os.makedirs(os.path.dirname(pic_filepath),exist_ok=True)
+            
+            plt.savefig(fname=pic_filepath)
             print(f' === complete {pic_name}{beforeEvtMin} image === ')
 
 # Draw Trajectory 
@@ -187,6 +205,7 @@ def heatmap_plot(events, drawPds,hours=1,flag='origin',grid=False):
                      evt_what=evt_what,
                      pic_name=f'{i+1}_{發生地點}_{positionTime.hour}_{hours}hour_{flag}',
                      grid=grid)
+        break
  
 # Load the event timePoint
 events = pd.read_excel("./guider20240808/databank/events.xlsx")
@@ -199,4 +218,4 @@ events = events[['positionTime','發生地點','事件分類', 'X', 'Y']]
 with open("./guider20240808/databank/pkl/filter01.pkl", 'rb') as f:
     txyzPds = pickle.load(f)   
 
-heatmap_plot(events, txyzPds,1,'heatmap_0',grid=False)       
+heatmap_plot(events, txyzPds,3,'heatmap_0',grid=False)       
