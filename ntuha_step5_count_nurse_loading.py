@@ -99,7 +99,7 @@ time_diff_cols = [col for col in load_all.columns if col.startswith('time_diff_'
 load_all['time_diff_all'] = load_all[time_diff_cols].sum(axis=1)
 position_diff_cols = [col for col in load_all.columns if col.startswith('position_diff_')]
 load_all['position_diff_all'] = load_all[position_diff_cols].sum(axis=1)
-load_all['mps_all'] = load_all['position_diff_all']/load_all['time_diff_all']
+load_all['mps_all'] = -1*load_all['position_diff_all']/load_all['time_diff_all']
 
 load_all['event'] = 0
 load_all = load_all.set_index('id_hours')
@@ -115,6 +115,7 @@ events['時間'] = events['時間'].astype(str)
 events['positionTime'] = pd.to_datetime(events['日期'] + ' ' + events['時間'], format='%Y-%m-%d %H%M', errors='coerce').dt.tz_localize(local_timezone)
 events = events[['positionTime','發生地點','事件分類', 'X', 'Y']]
 
+plot_data['event'] = 0
 for i, evt in events.iterrows():
     print(f' == work on {i} event == ')
     positionTime = evt['positionTime']
@@ -122,8 +123,8 @@ for i, evt in events.iterrows():
     evt_y = evt['Y']
     evt_what = evt['事件分類']
     發生地點 = evt['發生地點']
-    endtime = positionTime
-    startTime = endtime-datetime.timedelta(hours=3)
+    endtime = positionTime-datetime.timedelta(hours=0.)
+    startTime = endtime-datetime.timedelta(hours=1)
     
     # load_all.loc[endtime,'event'] = 1 if evt_what=='轉重症' else 2
 
@@ -136,8 +137,35 @@ for i, evt in events.iterrows():
     fig, ax = plt.subplots(figsize=(20, 10))  # adjust figsize for better view
     
     x_consecutive = plot_data.loc[startTime:endtime]
-
-    ax = x_consecutive.plot(figsize=(30,10),ylim=(0,0.8))
+    
+    ax = x_consecutive.plot(figsize=(30,10),ylim=(-0.5,0.5))
     plt.savefig(fname=f'./output/loading/{i}_{evt_what}.png')
 
- 
+    plot_data.loc[startTime:endtime,['event']] = 1 if evt_what=='轉重症' else 2
+
+plot_data['event'] = plot_data['event'].fillna(0)
+
+jjj = plot_data.groupby('event').agg({k: ['mean','std'] for k in mps_cols})
+jjj.to_csv('./output/loading_report_byCart.csv')
+
+ana = plot_data.reset_index().copy()
+ana['weekday'] = ana['id_hours'].dt.weekday
+ana['hour'] = ana['id_hours'].dt.hour
+analysis_ = [] 
+for k in mps_cols:
+    if k == 'mps_all': continue
+    temp = ana.loc[:,[k,'event','weekday','hour']]
+    temp.columns = ['mps','event','weekday','hour']
+    analysis_.append(temp)
+
+analysis = pd.concat(analysis_, axis=0, ignore_index=True)
+jjj2 = analysis.groupby('event').agg({'mps': ['mean','std']})
+print(jjj2)
+
+analysis.dropna().to_csv('./analysis/loading_event.csv')
+
+
+akk = analysis.groupby(['weekday','hour']).agg({'mps': ['mean','std']})
+akk = akk.reset_index()
+akk = akk.pivot(columns='weekday', index='hour')
+akk.to_csv('./output/loading_report_bydayhour.csv')
