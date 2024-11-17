@@ -38,18 +38,23 @@ def filter_single(df, time_col='positionTime'):
     dfc['group'] = dfc['position_diff'] > 2.5
     # Handle cases with large missing time gaps
     dfc['skip'] = 0
+    dfc['skip_change'] = 0
     
-    dfc.loc[(dfc['time_diff']>10) & (dfc['position_diff']>2), 'skip'] +=1
+    dfc.loc[(dfc['time_diff']>10) & (dfc['position_diff']>2), 'skip_change'] +=1
     dfc.loc[(dfc['time_diff']>10) & (dfc['position_diff']>2), 'group'] = True
-    dfc['skip'] = dfc['skip'].cumsum()
+    dfc['skip'] = dfc['skip_change'].cumsum()
     dfc['group'] = dfc['group'].cumsum()
     
     dfc['weekday'] = dfc[time_col].dt.weekday
     dfc['hour'] = dfc[time_col].dt.hour
     
     dfc['loss_tick'] = np.maximum(np.floor(dfc['time_diff'] - 1),0).fillna(0)
-    dfc['id_hours'] = dfc['positionTime'].dt.round('h')
-
+    dfc['id_hours'] = dfc['positionTime'].dt.round('min')
+    
+    temp = dfc[dfc['skip_change']>0]
+    dfc.loc[temp.index,'time_diff']=0
+    dfc.loc[temp.index,'position_diff']=0
+    
     return dfc
 
 # Load the event timePoint
@@ -60,10 +65,10 @@ events['positionTime'] = pd.to_datetime(events['日期'] + ' ' + events['時間'
 events = events[['positionTime','發生地點','事件分類', 'X', 'Y']]
 
 # Load the beacon positionTime
-with open("./guider20240808/databank/pkl/origin.pkl", 'rb') as f:
-    txyzPds_origin = pickle.load(f)
+with open("./guider20240808/databank/pkl/filter01.pkl", 'rb') as f:
+    txyzPds = pickle.load(f) 
 
-aao = txyzPds_origin.copy()
+aao = txyzPds.copy()
 aa={}
 lossTick = {}
 for k,v in aao.items():
@@ -76,36 +81,15 @@ N008new = pd.concat([N008[:"2024-10-17 09:00:00"],N029["2024-10-17 09:01:00":]],
                     axis=0,
                     ignore_index=False)
 aa.pop('N029')
-aa['N008'] = N008new
+aa['N008'] = filter_single(N008new.reset_index())
 
-temp_all = []
-temp_h_all = []
-for k,v in aa.items():
-    lossTick[k] = {}
-    temp = v.groupby(['weekday','hour'])['time_diff'].sum()
-    temp_h = v.groupby(['weekday','hour'])['id_hours'].nunique()
-    
-    temp = temp.reset_index()
-    temp_h = temp_h.reset_index()
-    temp = temp.pivot(columns='weekday', index='hour')
-    temp_h = temp_h.pivot(columns='weekday', index='hour')
-    temp_h = temp_h*60*60
-    
-    lossTick[k]['lossTick'] = temp
-    lossTick[k]['byWDH'] = temp_h
-    lossTick[k]['lossTickPercent'] = pd.DataFrame(temp.values/temp_h.values)
-    
-    temp_all.append(temp)
-    temp_h_all.append(temp_h)
+loadings = []
+for k, v in aa.items():
+    res = v.groupby(['id_hours', 'skip']).agg({'time_diff': 'sum', 'position_diff': 'sum'})
+    load = res.reset_index().groupby(['id_hours']).agg({'time_diff': 'sum', 'position_diff': 'sum'})
+    loadings.append(load.reset_index())
 
-lossTick_all = reduce(lambda x, y: x.add(y, fill_value=0), temp_all)
-hours_all = reduce(lambda x, y: x.add(y, fill_value=0), temp_h_all)
-lossTickPercent_all = lossTick_all.values/hours_all.values
-
-lossTick['all'] = {}
-lossTick['all']['lossTick'] =lossTick_all
-lossTick['all']['byWDH'] = hours_all
-lossTick['all']['lossTickPercent'] = pd.DataFrame(lossTickPercent_all)
+load_all = reduce(lambda x, y: x.merge(y, how='outer', on='id_hours'), loadings)
 
 
 
@@ -133,4 +117,4 @@ def export_lossTick_to_excel(lossTick, output_filename="./output/lossTick_report
 
 
 # Example usage:
-export_lossTick_to_excel(lossTick)
+# export_lossTick_to_excel(lossTick)
