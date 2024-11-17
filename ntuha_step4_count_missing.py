@@ -67,7 +67,16 @@ aao = txyzPds_origin.copy()
 aa={}
 lossTick = {}
 for k,v in aao.items():
-    aa[k] = filter_single(v) 
+    aa[k] = filter_single(v)
+    
+N029 = aa['N029'].set_index('positionTime')
+N008 = aa['N008'].set_index('positionTime')
+
+N008new = pd.concat([N008[:"2024-10-17 09:00:00"],N029["2024-10-17 09:01:00":]],
+                    axis=0,
+                    ignore_index=False)
+aa.pop('N029')
+aa['N008'] = N008new
 
 temp_all = []
 temp_h_all = []
