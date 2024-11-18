@@ -123,7 +123,7 @@ for i, evt in events.iterrows():
     evt_y = evt['Y']
     evt_what = evt['事件分類']
     發生地點 = evt['發生地點']
-    endtime = positionTime-datetime.timedelta(hours=0.25)
+    endtime = positionTime-datetime.timedelta(minutes=5)
     startTime = endtime-datetime.timedelta(hours=1)
     
     fig, ax = plt.subplots(figsize=(20, 10))  # adjust figsize for better view
