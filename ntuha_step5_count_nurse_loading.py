@@ -123,20 +123,12 @@ for i, evt in events.iterrows():
     evt_y = evt['Y']
     evt_what = evt['事件分類']
     發生地點 = evt['發生地點']
-    endtime = positionTime-datetime.timedelta(hours=0.)
+    endtime = positionTime-datetime.timedelta(hours=0.25)
     startTime = endtime-datetime.timedelta(hours=1)
     
-    # load_all.loc[endtime,'event'] = 1 if evt_what=='轉重症' else 2
-
-
-# consecutive_indices = np.where(load_all['event'].values==1)
-
-# if consecutive_indices[0].size > 1:
-#     cons_i = 0
-#     for i, idx in enumerate(consecutive_indices[0]):
     fig, ax = plt.subplots(figsize=(20, 10))  # adjust figsize for better view
     
-    x_consecutive = plot_data.loc[startTime:endtime]
+    x_consecutive = plot_data.loc[startTime:endtime][mps_cols]
     
     ax = x_consecutive.plot(figsize=(30,10),ylim=(-0.5,0.5))
     plt.savefig(fname=f'./output/loading/{i}_{evt_what}.png')

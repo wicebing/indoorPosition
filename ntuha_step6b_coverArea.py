@@ -172,7 +172,7 @@ for i, evt in events.iterrows():
     plot_data.loc[startTime:endtime,['event']] = 1 if evt_what=='轉重症' else 2
 
 
-
+plot_data[['corrd_number', 'cover_area_pct', 'weekday', 'hour', 'event']].dropna().to_csv('./analysis/areaPct.csv')
 jjj2 = plot_data.groupby('event').agg({'cover_area_pct': ['mean','std']})
 print(jjj2)
 

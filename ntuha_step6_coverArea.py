@@ -28,6 +28,9 @@ grid_size = 45
 
 # Define coordinates to remove
 all_area_coords = set()
+for i in range(25):   # grid_x <= 7 (0-7)
+    for j in range(25):  # grid_y >= 16
+        all_area_coords.add((i, j))
 remove_coords = set()
 for i in range(25):  # Or range(25) if your grid is actually 0-24
     remove_coords.add((0, i))     # grid_x = 0
@@ -47,7 +50,7 @@ for i in range(3):   # grid_x <= 7 (0-7)
 for i in range(4,18):   # grid_x <= 7 (0-7)
     for j in range(5):  # grid_y >= 16
         remove_coords.add((i, j))
-
+all_area_coords = all_area_coords-remove_coords
 
 def filter_single(df, time_col='positionTime'):
     dfc = df.copy().sort_values(by=time_col)
@@ -129,6 +132,16 @@ aao['N008'] = N008new.reset_index()
 aa={}
 lossTick = {}
 for k,v in aao.items():
+    print(f' ======== doing the {k} ==========')
     aa[k] = filter_single(v)
-    
 
+    
+aa_gridXY ={}
+select_cols = ['positionTime', 'x', 'y', 'id_hours', 'axis']
+for k,v in aa.items():
+    print(f' ======== doing the {k} ==========')
+    aa_gridXY[k] = v[select_cols]
+
+for k,v in aa_gridXY.items():
+    with open(f"./guider20240808/databank/pkl/filter02_gridxy_{k}.pkl", 'wb') as f:
+        pickle.dump(v, f)   
