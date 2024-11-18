@@ -107,13 +107,6 @@ def filter_single(df, time_col='positionTime'):
     
     return dfc
 
-# Load the event timePoint
-events = pd.read_excel("./guider20240808/databank/events.xlsx")
-events['日期'] = events['日期'].astype(str)
-events['時間'] = events['時間'].astype(str)
-events['positionTime'] = pd.to_datetime(events['日期'] + ' ' + events['時間'], format='%Y-%m-%d %H%M', errors='coerce').dt.tz_localize(local_timezone)
-events = events[['positionTime','發生地點','事件分類', 'X', 'Y']]
-
 aao = []
 # Load the beacon positionTime
 for k in beacon_ids:
@@ -138,6 +131,50 @@ aa3 = byhour_coverArea.copy()
 aa3.loc[:,['axis']] = aa3['axis'].apply(lambda x: x - remove_coords)
 aa3['corrd_number'] = aa3['axis'].apply(len)
 aa3['cover_area_pct'] = aa3['corrd_number']/len(all_area_coords)
+
+aa3['weekday'] = aa3['id_hours'].dt.weekday
+aa3['hour'] = aa3['id_hours'].dt.hour
+
+akk = aa3.groupby(['weekday','hour']).agg({'cover_area_pct': ['mean','std']})
+akk = akk.reset_index()
+akk = akk.pivot(columns='weekday', index='hour')
+akk.to_csv('./output/areaPct_report_bydayhour.csv')
+
+
+
+# Load the event timePoint
+events = pd.read_excel("./guider20240808/databank/events.xlsx")
+events['日期'] = events['日期'].astype(str)
+events['時間'] = events['時間'].astype(str)
+events['positionTime'] = pd.to_datetime(events['日期'] + ' ' + events['時間'], format='%Y-%m-%d %H%M', errors='coerce').dt.tz_localize(local_timezone)
+events = events[['positionTime','發生地點','事件分類', 'X', 'Y']]
+
+
+plot_data = aa3.copy().set_index('id_hours')
+plot_data['event'] = 0
+for i, evt in events.iterrows():
+    print(f' == work on {i} event == ')
+    positionTime = evt['positionTime']
+    evt_x = evt['X']
+    evt_y = evt['Y']
+    evt_what = evt['事件分類']
+    發生地點 = evt['發生地點']
+    endtime = positionTime-datetime.timedelta(hours=0.25)
+    startTime = endtime-datetime.timedelta(hours=1)
+    
+    fig, ax = plt.subplots(figsize=(20, 10))  # adjust figsize for better view
+    
+    x_consecutive = plot_data.loc[startTime:endtime,['cover_area_pct']]
+    
+    ax = x_consecutive.plot(figsize=(30,10),ylim=(0,1))
+    plt.savefig(fname=f'./output/areaPct/{i}_{evt_what}.png')
+
+    plot_data.loc[startTime:endtime,['event']] = 1 if evt_what=='轉重症' else 2
+
+
+
+jjj2 = plot_data.groupby('event').agg({'cover_area_pct': ['mean','std']})
+print(jjj2)
 
 
 
